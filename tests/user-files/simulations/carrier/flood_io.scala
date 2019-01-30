@@ -11,6 +11,7 @@ class Flood extends Simulation {
   val environment = System.getProperty("apiUrl")
   val ramp_users = Integer.getInteger("ramp_users")
   val ramp_duration = Integer.getInteger("ramp_duration")
+  val duration = Integer.getInteger("duration")
 
   val webProtocol = http
     .baseURL(environment)
@@ -20,18 +21,22 @@ class Flood extends Simulation {
 
   def flood_io: ScenarioBuilder = {
     scenario("flood_io")
-      .exec(Step1GET).exitHereIfFailed
-      .exec(Step1POST).exitHereIfFailed
-      .exec(Step2GET).exitHereIfFailed
-      .exec(Step2POST).exitHereIfFailed
-      .exec(Step3GET).exitHereIfFailed
-      .exec(Step3POST).exitHereIfFailed
-      .exec(Step4GET).exitHereIfFailed
-      .exec(Step4POST).exitHereIfFailed
-      .exec(dataJSON).exitHereIfFailed
-      .exec(Step5GET).exitHereIfFailed
-      .exec(Step5POST).exitHereIfFailed
-      .exec(FinalStep).exitHereIfFailed
+      .during(duration, exitASAP = false) {
+        tryMax(10) {
+          exec(Step1GET)
+            .exec(Step1POST)
+            .exec(Step2GET)
+            .exec(Step2POST)
+            .exec(Step3GET)
+            .exec(Step3POST)
+            .exec(Step4GET)
+            .exec(Step4POST)
+            .exec(dataJSON)
+            .exec(Step5GET)
+            .exec(Step5POST)
+            .exec(FinalStep)
+        }.exitHereIfFailed
+      }
   }
 
   setUp(flood_io.inject(rampUsers(ramp_users) over(ramp_duration seconds)).protocols(webProtocol))
