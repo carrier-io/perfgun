@@ -1,0 +1,15 @@
+  # Reporting configuration section (all report types are optional)
+#reportportal:                                        # ReportPortal.io specific section
+#  rp_host: https://rp.com                            # url to ReportPortal.io deployment
+#  rp_token: XXXXXXXXXXXXX                            # ReportPortal authentication token
+#  rp_project_name: XXXXXX                            # Name of a Project in ReportPortal to send results to
+#jira:
+#  url: https://jira.com                              # Url to Jira
+#  username: some.dude                                # User to create tickets
+#  password: password                                 # password to user in Jira
+#  jira_project: XYZC                                 # Jira project ID
+#  assignee: some.dude                                # Jira id of default assignee
+#  issue_type: Bug                                    # Jira issue type (Default: Bug)
+#  labels: Performance                                # Comaseparated list of lables for ticket
+#  watchers: another.dude                             # Comaseparated list of Jira IDs for watchers
+#  jira_epic_key: XYZC-123                            # Jira epic key (or id)
