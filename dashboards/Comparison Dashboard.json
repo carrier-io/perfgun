@@ -1114,8 +1114,8 @@
       },
       {
         "current": {
-          "text": "http://epuakhaw1400.kyiv.epam.com",
-          "value": "http://epuakhaw1400.kyiv.epam.com"
+          "text": "${VAR_DB_URL}",
+          "value": "${VAR_DB_URL}"
         },
         "hide": 2,
         "label": "",
@@ -1123,18 +1123,18 @@
         "options": [
           {
             "selected": true,
-            "text": "http://epuakhaw1400.kyiv.epam.com",
-            "value": "http://epuakhaw1400.kyiv.epam.com"
+            "text": "${VAR_DB_URL}",
+            "value": "${VAR_DB_URL}"
           }
         ],
-        "query": "http://epuakhaw1400.kyiv.epam.com",
+        "query": "${VAR_DB_URL}",
         "skipUrlSync": false,
         "type": "constant"
       },
       {
         "current": {
-          "text": "http://epuakhaw1400.kyiv.epam.com",
-          "value": "http://epuakhaw1400.kyiv.epam.com"
+          "text": "${VAR_PERF_HOST}",
+          "value": "${VAR_PERF_HOST}"
         },
         "hide": 2,
         "label": "",
@@ -1142,11 +1142,11 @@
         "options": [
           {
             "selected": true,
-            "text": "http://epuakhaw1400.kyiv.epam.com",
-            "value": "http://epuakhaw1400.kyiv.epam.com"
+            "text": "${VAR_PERF_HOST}",
+            "value": "${VAR_PERF_HOST}"
           }
         ],
-        "query": "http://epuakhaw1400.kyiv.epam.com",
+        "query": "${VAR_PERF_HOST}",
         "skipUrlSync": false,
         "type": "constant"
       },
