@@ -12,7 +12,7 @@ COPY rp_client_3.2.zip /opt/jarvis
 
 RUN apk add --update bash wget python python-dev py-pip libffi-dev openssl-dev build-base && \
   pip install --upgrade pip && \
-  pip install /opt/jarvis/rp_client_3.2.zip 'Flask==1.0.2' 'pyyaml==3.13' 'jira==2.0.0' 'flask_restful==0.3.6' 'configobj==5.0.6' 'requests==2.19.1' 'kombu==4.2.1' 'common==0.1.2' 'influxdb==5.2.0' 'argparse==1.4.0' && \
+  pip install /opt/jarvis/rp_client_3.2.zip 'Flask==1.0.2' 'numpy==1.16.0' 'pyyaml==3.13' 'jira==2.0.0' 'flask_restful==0.3.6' 'configobj==5.0.6' 'requests==2.19.1' 'kombu==4.2.1' 'common==0.1.2' 'influxdb==5.2.0' 'argparse==1.4.0' && \
   rm -rf /tmp/*
 
 RUN apk add --update wget bash && \
@@ -26,6 +26,7 @@ RUN apk add --update wget bash && \
 
 COPY executor.sh /opt/jarvis
 COPY logparser.py /opt/jarvis
+COPY compare_build_metrix.py /opt/jarvis
 COPY config.yaml /tmp/
 
 WORKDIR  /opt/gatling
