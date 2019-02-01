@@ -6,8 +6,8 @@ start_time=$(date +%s)000
 /opt/gatling/bin/gatling.sh -s $simulation
 end_time=$(date +%s)000
 
-echo "python compare_build_metrix.py -c $users -t $test_type -d $duration -r $rampup_time -u $environment -s $tokenized -st ${start_time} -et ${end_time} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log"
-python compare_build_metrix.py -c $users -t $test_type -d $duration -r $rampup_time -u $environment -s $tokenized -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log
+echo "python compare_build_metrix.py -c $users -t $test_type -d $duration -r $rampup_time -u $environment -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log"
+python compare_build_metrix.py -c $users -t $test_type -d $duration -r $rampup_time -u $environment -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log
 
 echo "python logparser.py -c $users -t $test_type -d $duration -r $rampup_time -u $environment -s $tokenized -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log"
 python logparser.py -c $users -t $test_type -d $duration -r $rampup_time -u $environment -s $tokenized -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log

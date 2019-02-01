@@ -16,11 +16,11 @@ object requests {
 
   val ageFromCSV = csv("data/age.csv").circular
 
-  val dataJSON = exec(http("Step5 GET Code")
+  val dataJSON = exec(http("Step5_GET_Code")
     .get("/code")
     .check(jsonPath("$.code").saveAs("dataJSON")))
 
-  val Step1GET = exec(http("Step1 GET")
+  val Step1GET = exec(http("Step1_GET")
     .get("/")
     .headers(headers_5)
     .check(status.is(200))
@@ -29,7 +29,7 @@ object requests {
     .check(regex("step_number\".*?value=\"(.*?)\"").find.saveAs("stepNumber")))
     .pause(1)
 
-  val Step1POST = exec(http("Step1 POST")
+  val Step1POST = exec(http("Step1_POST")
     .post("/start")
     .headers(headers_5)
     .formParam("utf8", "✓")
@@ -39,7 +39,7 @@ object requests {
     .formParam("commit", "Start"))
     .pause(1)
 
-  val Step2GET = exec(http("Step2 GET")
+  val Step2GET = exec(http("Step2_GET")
     .get("/step/2")
     .headers(headers_5)
     .check(regex("step_id.+?value=\"(.+?)\"").find.saveAs("challenger2"))
@@ -48,7 +48,7 @@ object requests {
 
   val Step2POST =
     feed(ageFromCSV)
-      .exec(http("Step2 POST")
+      .exec(http("Step2_POST")
         .post("/start")
         .headers(headers_5)
         .formParam("utf8", "✓")
@@ -61,7 +61,7 @@ object requests {
 
   val Step3GET =
     feed(ageFromCSV)
-      .exec(http("Step3 GET")
+      .exec(http("Step3_GET")
         .get("/step/3")
         .headers(headers_5)
         .check(regex("step_id.+?value=\"(.+?)\"").find.saveAs("challenger3"))
@@ -81,7 +81,7 @@ object requests {
       .pause(1)
 
 
-  val Step3POST = exec(http("Step3 POST")
+  val Step3POST = exec(http("Step3_POST")
     .post("/start")
     .headers(headers_5)
     .formParam("utf8", "✓")
@@ -93,7 +93,7 @@ object requests {
     .formParam("commit", "Next"))
     .pause(1)
 
-  val Step4GET = exec(http("Step4 GET")
+  val Step4GET = exec(http("Step4_GET")
     .get("/step/4")
     .headers(headers_5)
     .check(regex("step_id.+?value=\"(.+?)\"").find.saveAs("challenger4"))
@@ -116,7 +116,7 @@ object requests {
     })
     .pause(1)
 
-  val Step4POST = exec(http("Step4 POST")
+  val Step4POST = exec(http("Step4_POST")
     .post("/start")
     .headers(headers_5)
     .formParam("utf8", "✓")
@@ -135,13 +135,13 @@ object requests {
     .formParam("${orderName_10}", "${orderValue}")
     .formParam("commit", "Next"))
 
-  val Step5GET = exec(http("Step5 GET")
+  val Step5GET = exec(http("Step5_GET")
     .get("/step/5")
     .headers(headers_5)
     .check(regex("step_id.+?value=\"(.+?)\"").find.saveAs("challenger5"))
     .check(regex("step_number\".*?value=\"(.*?)\"").find.saveAs("stepNumber5")))
 
-  val Step5POST = exec(http("Step5 POST")
+  val Step5POST = exec(http("Step5_POST")
     .post("/start")
     .headers(headers_5)
     .formParam("utf8", "✓")
@@ -151,7 +151,7 @@ object requests {
     .formParam("challenger[one_time_token]", "${dataJSON}")
     .formParam("commit", "Next"))
 
-  val FinalStep = exec(http("Final Step")
+  val FinalStep = exec(http("Final_Step")
     .get("/done")
     .headers(headers_5)
     .check(regex("You're Done!")))
