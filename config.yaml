@@ -13,3 +13,6 @@
 #  labels: Performance                                # Comaseparated list of lables for ticket
 #  watchers: another.dude                             # Comaseparated list of Jira IDs for watchers
 #  jira_epic_key: XYZC-123                            # Jira epic key (or id)
+influx:
+  host: epuakhaw1400.kyiv.epam.com
+  port: 8086

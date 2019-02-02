@@ -3,8 +3,6 @@
 
 import argparse
 import csv
-import re
-import os
 from difflib import SequenceMatcher
 
 import traceback
@@ -15,7 +13,6 @@ import requests
 import contextlib
 
 import re
-import logging
 from jira import JIRA
 import hashlib
 import yaml

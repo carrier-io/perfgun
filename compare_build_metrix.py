@@ -108,7 +108,8 @@ class SimulationLogParser(object):
 
             }
             points.append(influx_record)
-        client = InfluxDBClient(self.args["influx_host"], 8086, username='', password='', database=INFLUX_DATABASE)
+        client = InfluxDBClient(self.args["influx_host"], self.args["influx_port"],
+                                username='', password='', database=INFLUX_DATABASE)
         client.write_points(points)
         client.close()
 
@@ -190,6 +191,7 @@ def parse_args():
     parser.add_argument("-st", "--start_time", help='Test start time', default=None)
     parser.add_argument("-et", "--end_time", help='Test end time', default=None)
     parser.add_argument("-i", "--influx_host", help='InfluxDB host or IP', default=None)
+    parser.add_argument("-p", "--influx_port", help='InfluxDB port', default=None)
     return vars(parser.parse_args())
 
 
