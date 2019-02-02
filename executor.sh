@@ -42,7 +42,7 @@ echo "Tests are done"
 else
 echo "Tests are done"
 echo "Generating metrics for comparison table ..."
-python compare_build_metrix.py -c $users -t $test_type -d $duration -r $rampup_time -u $url -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log
+python compare_build_metrix.py -c $users -t $test_type -d $duration -r $rampup_time -u $url -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log
 fi
 echo "Parsing errors ..."
 python logparser.py -c $users -t $test_type -d $duration -r $rampup_time -u $url -s $tokenized -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $tokenized)/simulation.log
