@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export tokenized=$(python -c "from os import environ; print environ['simulation'].split('.')[1]")
+export tokenized=$(python -c "from os import environ; print environ['test'].split('.')[1]")
 export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('host')")
 export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('host',8086)")
 
@@ -32,8 +32,8 @@ cd /opt/gatling/bin
 
 start_time=$(date +%s)000
 
-echo "${DEFAULT_EXECUTION}" ${JOLOKIA_AGENT} ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS} -cp "${GATLING_CLASSPATH}" io.gatling.app.Gatling -s $simulation
-"${DEFAULT_EXECUTION}" ${JOLOKIA_AGENT} ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS} -cp "${GATLING_CLASSPATH}" io.gatling.app.Gatling -s $simulation
+echo "Starting simulation: ${test}"
+"${DEFAULT_EXECUTION}" ${JOLOKIA_AGENT} ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS} -cp "${GATLING_CLASSPATH}" io.gatling.app.Gatling -s $test
 
 end_time=$(date +%s)000
 
