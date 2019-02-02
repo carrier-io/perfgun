@@ -8,8 +8,8 @@ if [[ -z "${influx_host}" ]]; then
 export influx_piece=""
 else
 export influx_piece="-Dgatling.data.graphite.host=${influx_host} -Dgatling.data.graphite.port=${influx_port} -Dgatling.data.graphite.rootPathPrefix=${test_type}.${env}.${users}"
-sudo sed -e -i "s/LOAD_GENERATOR_NAME/${lg_name}_${tokenized}_${lg_id}/g" /etc/telegraf/telegraf.conf
-sudo sed -e -i "s/INFLUX_HOST/${influx_host}/g" /etc/telegraf/telegraf.conf
+sudo sed -i "s/LOAD_GENERATOR_NAME/${lg_name}_${tokenized}_${lg_id}/g" /etc/telegraf/telegraf.conf
+sudo sed -i "s/INFLUX_HOST/${influx_host}/g" /etc/telegraf/telegraf.conf
 sudo service telegraf restart
 DEFAULT_EXECUTION="/usr/bin/java"
 JOLOKIA_AGENT="-javaagent:/opt/java/jolokia-jvm-1.6.0-agent.jar=config=/opt/jolokia.conf"
