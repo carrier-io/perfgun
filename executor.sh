@@ -1,8 +1,8 @@
 #!/bin/bash
 
-export tokenized=$(python -c "from os import environ; print environ['test'].split('.')[1]")
+export tokenized=$(python -c "from os import environ; print environ['test'].split('.')[1].lower()")
 export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('host')")
-export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('port',8086)")
+export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('port',2003)")
 
 if [[ -z "${influx_host}" ]]; then
 export influx_piece=""
