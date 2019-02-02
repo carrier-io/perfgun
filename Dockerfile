@@ -23,9 +23,8 @@ RUN useradd -m -u $UID -g $GID -s /bin/bash $UNAME
 RUN echo "carrier    ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 RUN pip install setuptools==40.6.2
-RUN pip install /tmp/rp_client_3.2.zip 'Flask==1.0.2' 'flask_restful==0.3.6' \
-    'configobj==5.0.6' 'requests==2.19.1' 'kombu==4.2.1' 'common==0.1.2' \
-    'influxdb==5.2.0' 'argparse==1.4.0' 'numpy==1.15.4' && \
+RUN pip install /tmp/rp_client_3.2.zip 'configobj==5.0.6' 'requests==2.19.1' 'common==0.1.2' \
+    'influxdb==5.2.0' 'argparse==1.4.0' 'numpy==1.15.4' 'PyYAML==3.13' 'jira==2.0.0' && \
     rm -rf /tmp/*
 
 # Installing Java Jolokia
