@@ -3,11 +3,12 @@
 export tokenized=$(python -c "from os import environ; print environ['test'].split('.')[1].lower()")
 export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('host')")
 export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('port',2003)")
+export grafite_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('graphite_port',2003)")
 
 if [[ -z "${influx_host}" ]]; then
 export influx_piece=""
 else
-export influx_piece="-Dgatling.data.graphite.host=${influx_host} -Dgatling.data.graphite.port=${influx_port} -Dgatling.data.graphite.rootPathPrefix=${test_type}.${env}.${users}"
+export influx_piece="-Dgatling.data.graphite.host=${influx_host} -Dgatling.data.graphite.port=${grafite_port} -Dgatling.data.graphite.rootPathPrefix=${test_type}.${env}.${users}"
 sudo sed -i "s/LOAD_GENERATOR_NAME/${lg_name}_${tokenized}_${lg_id}/g" /etc/telegraf/telegraf.conf
 sudo sed -i "s/INFLUX_HOST/${influx_host}/g" /etc/telegraf/telegraf.conf
 sudo service telegraf restart
