@@ -46,13 +46,6 @@ object requests {
     .check(regex("step_number\".*?value=\"(.*?)\"").find.saveAs("stepNumber2")))
     .pause(1)
 
-  val failedStep2GET = exec(http("Step2_GET")
-    .get("/step/2")
-    .headers(headers_5)
-    .check(regex("step_id_.+?value=\"(.+?)\"").find.saveAs("challenger2"))
-    .check(regex("step_number\".*?value=\"(.*?)\"").find.saveAs("stepNumber2")))
-    .pause(1)
-
   val Step2POST =
     feed(ageFromCSV)
       .exec(http("Step2_POST")
@@ -162,4 +155,9 @@ object requests {
     .get("/done")
     .headers(headers_5)
     .check(regex("You're Done!")))
+
+  val failedFinalStep = exec(http("Final_Step")
+    .get("/done")
+    .headers(headers_5)
+    .check(regex("You're Done!!!")))
 }

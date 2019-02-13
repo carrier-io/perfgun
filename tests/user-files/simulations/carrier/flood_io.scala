@@ -25,8 +25,7 @@ class Flood extends Simulation {
         tryMax(10) {
           exec(Step1GET)
             .exec(Step1POST)
-            .randomSwitch(50.0 -> exec(Step2GET),
-                          50.0 -> exec(failedStep2GET))
+            .exec(Step2GET)
             .exec(Step2POST)
             .exec(Step3GET)
             .exec(Step3POST)
@@ -35,7 +34,8 @@ class Flood extends Simulation {
             .exec(dataJSON)
             .exec(Step5GET)
             .exec(Step5POST)
-            .exec(FinalStep)
+            .randomSwitch(80.0 -> exec(FinalStep),
+              20.0 -> exec(failedFinalStep))
         }.exitHereIfFailed
       }
   }
