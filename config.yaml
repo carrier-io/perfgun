@@ -1,4 +1,4 @@
-  # Reporting configuration section (all report types are optional)
+  #Reporting configuration section (all report types are optional)
 #reportportal:                                        # ReportPortal.io specific section
 #  rp_host: https://rp.com                            # url to ReportPortal.io deployment
 #  rp_token: XXXXXXXXXXXXX                            # ReportPortal authentication token
@@ -10,9 +10,12 @@
 #  jira_project: XYZC                                 # Jira project ID
 #  assignee: some.dude                                # Jira id of default assignee
 #  issue_type: Bug                                    # Jira issue type (Default: Bug)
-#  labels: Performance                                # Comaseparated list of lables for ticket
+#  labels: Performance, perfgun                       # Comaseparated list of lables for ticket
 #  watchers: another.dude                             # Comaseparated list of Jira IDs for watchers
 #  jira_epic_key: XYZC-123                            # Jira epic key (or id)
 #influx:
 #  host: carrier_influx                               # Influx host DNS or IP
-#  port: 8086                                         # Influx port
+#  port: 8086                                         # Influx port (Default: 8086)
+#  graphite_port: 2003                                # Graphite port (Default: 2003)
+#  gatling_db: gatling                                # Database name for gatling test results (Default: gatling)
+#  comparison_db: comparison                          # Database name for comparison builds (Default: comparison)

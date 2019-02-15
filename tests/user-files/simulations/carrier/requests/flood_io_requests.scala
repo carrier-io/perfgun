@@ -52,7 +52,7 @@ object requests {
         .post("/start")
         .headers(headers_5)
         .formParam("utf8", "✓")
-        .formParam("authenticity_token", "${token}")
+        .formParam("authenticity_token", "")
         .formParam("challenger[step_id]", "${challenger2}")
         .formParam("challenger[step_number]", "${stepNumber2}")
         .formParam("challenger[age]", "${age}")
@@ -155,4 +155,9 @@ object requests {
     .get("/done")
     .headers(headers_5)
     .check(regex("You're Done!")))
+
+  val failedFinalStep = exec(http("Final_Step")
+    .get("/done")
+    .headers(headers_5)
+    .check(regex("You're Done!!!")))
 }

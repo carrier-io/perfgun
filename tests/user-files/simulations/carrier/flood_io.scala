@@ -21,7 +21,7 @@ class Flood extends Simulation {
 
   def flood_io: ScenarioBuilder = {
     scenario("flood_io")
-      .during(duration, exitASAP = false) {
+      .during(duration, exitASAP = true) {
         tryMax(10) {
           exec(Step1GET)
             .exec(Step1POST)
@@ -34,7 +34,8 @@ class Flood extends Simulation {
             .exec(dataJSON)
             .exec(Step5GET)
             .exec(Step5POST)
-            .exec(FinalStep)
+            .randomSwitch(80.0 -> exec(FinalStep),
+              20.0 -> exec(failedFinalStep))
         }.exitHereIfFailed
       }
   }
