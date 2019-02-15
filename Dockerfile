@@ -62,8 +62,6 @@ COPY logparser.py /opt/gatling/bin
 COPY compare_build_metrix.py /opt/gatling/bin
 COPY config.yaml /tmp/
 
-WORKDIR  /opt/gatling
-
 VOLUME ["/opt/gatling/conf", "/opt/gatling/results", "/opt/gatling/user-files"]
 
 COPY tests /opt/gatling
@@ -72,4 +70,4 @@ COPY logback.xml /opt/gatling/conf
 RUN ["/bin/bash", "-c", "/opt/gatling/bin/gatling.sh -s carrier.WarmUp"]
 RUN rm -rf /opt/gatling/results/*
 
-ENTRYPOINT ["gatling.sh"]
+ENTRYPOINT ["/opt/gatling/bin/executor.sh"]

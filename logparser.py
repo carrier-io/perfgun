@@ -11,22 +11,22 @@ import sys
 import warnings
 import requests
 import contextlib
+import os
 
 import re
 from jira import JIRA
 import hashlib
 import yaml
-
+from influxdb import InfluxDBClient
 from reportportal_client import ReportPortalServiceAsync
 from functools import partial
 
 UNDEFINED = "undefined"
-
 FIELDNAMES = 'action', 'simulation', 'thread', "simulation_name", "request_name", \
              "request_start", "request_end", "status", "gatling_error", "error"
-
 ERROR_FIELDS = 'Response', 'Request_params', 'Gatling_error'
-
+RESULTS_FOLDER = '/opt/gatling/results/'
+SIMLOG_NAME = 'simulation.log'
 PATH_TO_CONFIG = "/tmp/config.yaml"
 
 
@@ -45,26 +45,35 @@ class SimulationLogParser(object):
 
     def parse_log(self):
         """Parse line with error and send to database"""
-        simulation = None
-        path = args['file']
+        simulation = self.args['simulation']
+        path = self.find_log() if self.args['file'] is None else self.args['file']
         unparsed_counter = 0
         errors = {}
+        user_count = 0
+        try:
+            client = InfluxDBClient(self.args["influx_host"], self.args['influx_port'], username='', password='',
+                                    database=self.args['gatling_db'])
+            raws = client.query("SELECT * FROM " + self.args['type'] + " WHERE simulation=\'" + simulation +
+                                "\' and status='ok' and time >= " + str(self.args['start_time']) + "ms and time <= "
+                                + str(self.args['end_time']) + "ms limit 1")
+            client.close()
+            for raw in list(raws.get_points()):
+                user_count = int(raw['user_count'])
+        except:
+            print("Failed connection to " + self.args["influx_host"] + ", database - " + self.args['gatling_db'])
         with open(path) as tsv:
             for entry in csv.DictReader(tsv, delimiter="\t", fieldnames=FIELDNAMES, restval="not_found"):
-                if simulation is None:
-                    simulation = entry['simulation_name']
                 if len(entry) >= 8 and (entry['status'] == "KO"):
                     try:
                         data = self.parse_entry(entry)
                         data['simulation'] = simulation
-                        data['environment'] = self.args['environment']
+                        data['user_count'] = user_count
                         data["request_params"] = self.remove_session_id(data["request_params"])
                         count = 1
                         key = "%s_%s_%s" % (data['request_name'], data['error_code'], data['response_code'])
                         if key not in errors:
                             errors[key] = {"Request name": data['request_name'], "Method": data['request_method'],
                                            "Request headers": data["headers"], 'Error count': count,
-                                           'Environment': data['environment'],
                                            "Response code": data['response_code'], "Error code": data['error_code'],
                                            "Request URL": data['request_url'], "Request_params": [], "Response": [],
                                            "Gatling_error": []}
@@ -83,6 +92,16 @@ class SimulationLogParser(object):
             print("Unparsed errors: %d" % unparsed_counter)
         return errors
 
+    @staticmethod
+    def find_log():
+        """Walk file tree to find simulation log"""
+        for d, dirs, files in os.walk(RESULTS_FOLDER):
+            for f in files:
+                if f == SIMLOG_NAME:
+                    simlog_folder = os.path.basename(d)
+                    return os.path.join(RESULTS_FOLDER, simlog_folder, SIMLOG_NAME)
+        print("error no simlog")
+
     def check_dublicate(self, entry, data, field):
         for params in entry[field]:
             if SequenceMatcher(None, str(data[field.lower()]), str(params)).ratio() > 0.7:
@@ -91,7 +110,6 @@ class SimulationLogParser(object):
     def parse_entry(self, values):
         """Parse error entry"""
         values['test_type'] = self.args['type']
-        values['user_count'] = self.args['count']
         values['response_time'] = int(values['request_end']) - int(values['request_start'])
         values['request_start'] += "000000"
         values['response_code'] = self.extract_response_code(values['error'])
@@ -139,6 +157,8 @@ class SimulationLogParser(object):
             request_parts = regex.group(1).split("?")
             url = request_parts[0]
             params = request_parts[len(request_parts) - 1] if len(request_parts) >= 2 else ''
+            params = params + " " + self.parse_params(param)
+            params = params.replace(":", "=")
             url = self.escape_for_json(url)
             params = self.escape_for_json(params)
             method = re.search(r" ([A-Z]+) headers", param).group(1)
@@ -150,6 +170,12 @@ class SimulationLogParser(object):
         if regex and regex.group(1):
             return regex.group(1)
         return UNDEFINED
+
+    def parse_params(self, param):
+        regex = re.search(r"formParams: ?(.+?) ?,", param)
+        if regex and regex.group(1):
+            return regex.group(1)
+        return ""
 
     def parse_response(self, param):
         regex = re.search(r"Response: ?(.+)$", param)
@@ -273,14 +299,12 @@ class ReportPortal:
                     service.start_test_item(name=item_name,
                                             description="This request was failed {} times".format(
                                                 errors[key]['Error count']),
-                                            tags=[self.args['type'], self.args['url'], 'gatling_test'],
+                                            tags=[self.args['type'], errors[key]['Request URL'], 'gatling_test'],
                                             start_time=self.timestamp(),
                                             item_type="STEP",
                                             parameters={"simulation": self.args['simulation'],
-                                                        'duration': self.args['duration'],
-                                                        'user count': self.args['count'],
-                                                        'rump duration': self.args['rumpup'],
-                                                        'environment': self.args['environment'],
+                                                        'duration': int(self.args['end_time'])/1000
+                                                        - int(self.args['start_time'])/1000,
                                                         'test type': self.args['type']})
 
                     self.log_message(service, 'Request name', errors[key], 'WARN')
@@ -288,7 +312,6 @@ class ReportPortal:
                     self.log_message(service, 'Request URL', errors[key], 'WARN')
                     self.log_message(service, 'Request_params', errors[key], 'WARN')
                     self.log_message(service, 'Request headers', errors[key], 'INFO')
-                    self.log_message(service, 'Environment', errors[key], 'INFO')
                     self.log_message(service, 'Error count', errors[key], 'WARN')
                     self.log_message(service, 'Error code', errors[key], 'WARN')
                     self.log_message(service, 'Gatling_error', errors[key], 'WARN')
@@ -415,25 +438,25 @@ class JiraWrapper:
 def create_description(error, arguments):
     description = ""
     if arguments['simulation']:
-        description += "Simulation: " + arguments['simulation'] + "\n"
-    if arguments['url']:
-        description += "Target environment: " + arguments['url'] + "\n"
+        description += "*Simulation*: " + arguments['simulation'] + "\n"
     if error['Request URL']:
-        description += "Request URL: " + error['Request URL'] + "\n"
+        description += "*Request URL*: " + error['Request URL'] + "\n"
     if error['Request_params']:
-        description += "Request params: " + str(error['Request_params'])[2:-2] + "\n"
+        description += "*Request params*: " + str(error['Request_params'])[2:-2].replace(" ", "\n") + "\n"
     if error['Gatling_error']:
-        description += "Gatling error: " + str(error['Gatling_error']) + "\n"
+        description += "*Gatling error*: " + str(error['Gatling_error']) + "\n"
     if error['Error count']:
-        description += "Error count: " + str(error['Error count']) + "\n"
+        description += "*Error count*: " + str(error['Error count']) + "\n"
     if error['Response code']:
-        description += "Response code: " + error['Response code'] + "\n"
+        description += "*Response code*: " + error['Response code'] + "\n"
+    if error['Response']:
+        description += "*Response body*: " + str(error['Response']).replace("\n", "") + "\n"
 
     return description
 
 
 def finding_error_string(error, arguments):
-    error_str = arguments['simulation'] + "_" + arguments['url'] + "_" + str(error['Gatling_error']) + "_" \
+    error_str = arguments['simulation'] + "_" + error['Request URL'] + "_" + str(error['Gatling_error']) + "_" \
                     + error['Request name']
     return error_str
 
@@ -445,14 +468,14 @@ def get_hash_code(error, arguments):
 
 def get_args():
     parser = argparse.ArgumentParser(description='Simlog parser.')
-    parser.add_argument("-f", "--file", help="file path", required=True, default=None)
-    parser.add_argument("-c", "--count", type=int, required=True, help="User count.")
-    parser.add_argument("-t", "--type", required=True, help="Test type.")
-    parser.add_argument("-e", "--environment", help='Target environment', default=None)
-    parser.add_argument("-d", "--duration", help='Test duration', default=None)
-    parser.add_argument("-r", "--rumpup", help='Rump up time', default=None)
-    parser.add_argument("-u", "--url", help='Environment url', default=None)
+    parser.add_argument("-f", "--file", help="file path", default=None)
+    parser.add_argument("-t", "--type", help="Test type.")
     parser.add_argument("-s", "--simulation", help='Test simulation', default=None)  # should be the same as on Grafana
+    parser.add_argument("-st", "--start_time", help='Test start time', default=None)
+    parser.add_argument("-et", "--end_time", help='Test end time', default=None)
+    parser.add_argument("-i", "--influx_host", help='InfluxDB host or IP', default=None)
+    parser.add_argument("-p", "--influx_port", help='InfluxDB port', default=None)
+    parser.add_argument("-gdb", "--gatling_db", help='Gatling DB', default=None)
     return vars(parser.parse_args())
 
 
@@ -502,12 +525,14 @@ def report_errors(errors, args):
                 description = create_description(errors[error], args)
                 jira_service.create_issue(errors[error]['Request name'], 'Major', description, issue_hash)
         else:
-            print("Something wrong with Jira")
+            print("Failed connection to Jira or project does not exist")
 
 
 if __name__ == '__main__':
     print("Parsing simulation log")
     args = get_args()
+    if not str(args['file']).__contains__("//"):
+        args['file'] = None
     logParser = SimulationLogParser(args)
     errors = logParser.parse_log()
     report_errors(errors, args)

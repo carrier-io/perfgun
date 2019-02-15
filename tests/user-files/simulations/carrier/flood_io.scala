@@ -21,7 +21,7 @@ class Flood extends Simulation {
 
   def flood_io: ScenarioBuilder = {
     scenario("flood_io")
-      .during(duration, exitASAP = false) {
+      .during(duration, exitASAP = true) {
         tryMax(10) {
           exec(Step1GET)
             .exec(Step1POST)

@@ -16,8 +16,6 @@ SIMLOG_NAME = 'simulation.log'
 FIELDNAMES = 'action', 'simulation', 'thread', "simulation_name", "request_name", \
              "request_start", "request_end", "status", "gatling_error", "error"
 
-INFLUX_DATABASE = 'comparison'
-
 
 class SimulationLogParser(object):
     def __init__(self, arguments):
@@ -25,18 +23,28 @@ class SimulationLogParser(object):
 
     def parse_log(self):
         """Parse line with error and send to database"""
-        simulation = None
+        simulation = self.args['simulation']
         path = self.find_log() if self.args['file'] is None else self.args['file']
         reqs = dict()
         test_time = time()
-        build_id = "{}_{}_{}".format(self.args['type'], self.args['count'],
-                                     datetime.datetime.fromtimestamp(test_time).strftime('%Y-%m-%dT%H:%M:%SZ'))
         test_start = time()
         test_end = 0
+        user_count = 0
+        try:
+            client = InfluxDBClient(self.args["influx_host"], self.args['influx_port'], username='', password='',
+                                    database=self.args['gatling_db'])
+            raws = client.query("SELECT * FROM " + self.args['type'] + " WHERE simulation=\'" + simulation +
+                                "\' and status='ok' and time >= " + str(self.args['start_time']) + "ms and time <= "
+                                + str(self.args['end_time']) + "ms limit 1")
+            for raw in list(raws.get_points()):
+                user_count = int(raw['user_count'])
+            client.close()
+        except:
+            print("Failed connection to " + self.args["influx_host"] + ", database - " + self.args['gatling_db'])
+        build_id = "{}_{}_{}".format(self.args['type'], user_count,
+                                     datetime.datetime.fromtimestamp(test_time).strftime('%Y-%m-%dT%H:%M:%SZ'))
         with open(path) as tsv:
             for entry in csv.DictReader(tsv, delimiter="\t", fieldnames=FIELDNAMES, restval="not_found"):
-                if simulation is None:
-                    simulation = entry['simulation_name']
                 if entry['action'] == "REQUEST":
                     try:
                         test_start = test_start if int(entry['request_start']) > test_start else int(
@@ -44,7 +52,7 @@ class SimulationLogParser(object):
                         test_end = test_end if int(entry['request_end']) < test_end else int(entry['request_end'])
                         data = self.parse_entry(entry)
                         data['simulation'] = simulation
-                        data['environment'] = self.args['environment']
+                        data['user_count'] = user_count
                         key = '{} {}'.format(data["request_method"].upper(), data["request_name"])
                         if key not in reqs:
                             reqs[key] = {
@@ -77,12 +85,12 @@ class SimulationLogParser(object):
                 "measurement": "api_comparison",
                 "tags": {
                     "simulation": simulation,
-                    "users": self.args['count'],
+                    "users": user_count,
                     "test_type": self.args["type"],
                     "build_id": build_id,
                     "request_name": reqs[req]['request_name'],
                     "method": reqs[req]['method'],
-                    "duration": self.args['duration']
+                    "duration": int(self.args['end_time'])/1000 - int(self.args['start_time'])/1000
                 },
                 "time": datetime.datetime.fromtimestamp(test_time).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "fields": {
@@ -108,10 +116,13 @@ class SimulationLogParser(object):
 
             }
             points.append(influx_record)
-        client = InfluxDBClient(self.args["influx_host"], self.args["influx_port"],
-                                username='', password='', database=INFLUX_DATABASE)
-        client.write_points(points)
-        client.close()
+        try:
+            client = InfluxDBClient(self.args["influx_host"], self.args['influx_port'],
+                                username='', password='', database=self.args['comparison_db'])
+            client.write_points(points)
+            client.close()
+        except:
+            print("Failed connection to " + self.args["influx_host"] + ", database - comparison")
 
     @staticmethod
     def escape_for_json(string):
@@ -171,7 +182,6 @@ class SimulationLogParser(object):
     def parse_entry(self, values):
         """Parse error entry"""
         values['test_type'] = self.args['type']
-        values['user_count'] = self.args['count']
         values['response_time'] = int(values['request_end']) - int(values['request_start'])
         values['response_code'] = self.extract_response_code(values['error'])
         values['request_url'], _, values['request_method'] = self.parse_request(values['error'])
@@ -180,24 +190,22 @@ class SimulationLogParser(object):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Simlog parser.')
-    parser.add_argument("-f", "--file", help="file path", required=True, default=None)
-    parser.add_argument("-c", "--count", type=int, required=True, help="User count.")
-    parser.add_argument("-t", "--type", required=True, help="Test type.")
-    parser.add_argument("-e", "--environment", help='Target environment', default=None)
-    parser.add_argument("-d", "--duration", help='Test duration', default=None)
-    parser.add_argument("-r", "--rumpup", help='Rump up time', default=None)
-    parser.add_argument("-u", "--url", help='Environment url', default='')
+    parser.add_argument("-f", "--file", help="file path", default=None)
+    parser.add_argument("-t", "--type", help="Test type.", default="test")
     parser.add_argument("-s", "--simulation", help='Test simulation', default=None)  # should be the same as on Grafana
     parser.add_argument("-st", "--start_time", help='Test start time', default=None)
     parser.add_argument("-et", "--end_time", help='Test end time', default=None)
     parser.add_argument("-i", "--influx_host", help='InfluxDB host or IP', default=None)
     parser.add_argument("-p", "--influx_port", help='InfluxDB port', default=None)
+    parser.add_argument("-gdb", "--gatling_db", help='Gatling DB', default=None)
+    parser.add_argument("-cdb", "--comparison_db", help='Comparison DB', default=None)
     return vars(parser.parse_args())
 
 
 if __name__ == '__main__':
     print("Parsing simulation log")
     args = parse_args()
-
+    if not str(args['file']).__contains__("//"):
+        args['file'] = None
     logParser = SimulationLogParser(args)
     logParser.parse_log()
