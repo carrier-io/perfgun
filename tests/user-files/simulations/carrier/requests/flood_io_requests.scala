@@ -52,7 +52,7 @@ object requests {
         .post("/start")
         .headers(headers_5)
         .formParam("utf8", "✓")
-        .formParam("authenticity_token", "")
+        .formParam("authenticity_token", "${token}")
         .formParam("challenger[step_id]", "${challenger2}")
         .formParam("challenger[step_number]", "${stepNumber2}")
         .formParam("challenger[age]", "${age}")
