@@ -185,12 +185,13 @@ class SimulationLogParser(object):
 
 
 class ReportPortal:
-    def __init__(self, errors_data, arguments, rp_url, rp_token, rp_project):
+    def __init__(self, errors_data, arguments, rp_url, rp_token, rp_project, rp_launch_name):
         self.errors = errors_data
         self.args = arguments
         self.rp_url = rp_url
         self.rp_token = rp_token
         self.rp_project = rp_project
+        self.rp_launch_name = rp_launch_name
 
     @contextlib.contextmanager
     def no_ssl_verification(self):
@@ -290,7 +291,7 @@ class ReportPortal:
             errors_len = len(errors)
             if errors_len > 0:
                 # Start launch.
-                service.start_launch(name=self.args['type'],
+                service.start_launch(name=self.rp_launch_name,
                                      start_time=self.timestamp(),
                                      description='This simulation has {} fails'.format(errors_len))
                 for key in errors:
@@ -322,7 +323,7 @@ class ReportPortal:
 
                     service.finish_test_item(end_time=self.timestamp(), status="FAILED")
             else:
-                service.start_launch(name=self.args['type'],
+                service.start_launch(name=self.rp_launch_name,
                                      start_time=self.timestamp(),
                                      description='This simulation has no fails')
 
@@ -491,11 +492,12 @@ def report_errors(errors, args):
         rp_project = config['reportportal'].get("rp_project_name")
         rp_url = config['reportportal'].get("rp_host")
         rp_token = config['reportportal'].get("rp_token")
-        if not (rp_project and rp_url and rp_token):
+        rp_launch_name = config['reportportal'].get("rp_launch_name")
+        if not (rp_project and rp_url and rp_token and rp_launch_name):
             print("ReportPortal configuration values missing, proceeding "
                   "without report portal integration ")
         else:
-            rp_service = ReportPortal(errors, args, rp_url, rp_token, rp_project)
+            rp_service = ReportPortal(errors, args, rp_url, rp_token, rp_project, rp_launch_name)
     if rp_service:
         rp_service.my_error_handler(sys.exc_info())
         rp_service.report_errors()

@@ -47,6 +47,7 @@ You have to uncomment the necessary configuration section and pass parameters to
 #  rp_host: https://rp.com                            # url to ReportPortal.io deployment
 #  rp_token: XXXXXXXXXXXXX                            # ReportPortal authentication token
 #  rp_project_name: XXXXXX                            # Name of a Project in ReportPortal to send results to
+#  rp_launch_name: XXXXXX                             # Name of a launch in ReportPortal to send results to
 #jira:
 #  url: https://jira.com                              # Url to Jira
 #  username: some.dude                                # User to create tickets
