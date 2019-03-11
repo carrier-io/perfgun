@@ -94,7 +94,7 @@ class SimulationLogParser(object):
                 },
                 "time": datetime.datetime.fromtimestamp(test_time).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "fields": {
-                    "throughput": round(float(len(reqs[req]["times"])*1000)/float(test_end-test_start), 3),
+                    "throughput": round(float(len(reqs[req]["times"])*1000)/float(int(self.args['end_time'])-int(self.args['start_time'])), 3),
                     "total": len(reqs[req]["times"]),
                     "ok": reqs[req]["OK"],
                     "ko": reqs[req]["KO"],
