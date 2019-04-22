@@ -1,15 +1,15 @@
 #!/bin/bash
 
-export tokenized=$(python -c "from os import environ; print environ['test'].split('.')[1].lower()")
-export config=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()); print y")
+export tokenized=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower())")
+export config=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()); print(y)")
 if [[ "${config}" != "None" ]]; then
-export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('host')")
-export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('port',8086)")
-export graphite_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('graphite_port',2003)")
-export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('gatling_db', 'gatling')")
-export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print y.get('comparison_db', 'comparison')")
-export report_portal=$(python -c "import yaml; print yaml.load(open('/tmp/config.yaml').read()).get('reportportal',{})")
-export jira=$(python -c "import yaml; print yaml.load(open('/tmp/config.yaml').read()).get('jira',{})")
+export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('host'))")
+export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('port',8086))")
+export graphite_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('graphite_port',2003))")
+export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('gatling_db', 'gatling'))")
+export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
+export report_portal=$(python -c "import yaml; print (yaml.load(open('/tmp/config.yaml').read()).get('reportportal',{}))")
+export jira=$(python -c "import yaml; print(yaml.load(open('/tmp/config.yaml').read()).get('jira',{}))")
 else
 export influx_host="None"
 export jira="{}"
@@ -17,6 +17,10 @@ export report_portal="{}"
 fi
 if [[ -z "${test_type}" ]]; then
 export test_type="test"
+fi
+
+if [[ -z "${build_id}" ]]; then
+export build_id="None"
 fi
 
 if [[ -z "${env}" ]]; then
@@ -62,12 +66,12 @@ echo "Starting simulation: ${test}"
 
 end_time=$(date +%s)000
 
-export simulation_folder=$(python -c "from os import environ; print environ['test'].split('.')[1].lower().replace('_', '-')")
+export simulation_folder=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower().replace('_', '-'))")
 
 if [[ "${influx_host}" != "None" ]]; then
 echo "Tests are done"
 echo "Generating metrics for comparison table ..."
-python compare_build_metrix.py -t $test_type -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
+python compare_build_metrix.py -t $test_type -l ${lg_id} -b ${build_id} -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
 else
 echo "Tests are done"
 fi

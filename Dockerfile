@@ -1,7 +1,8 @@
-FROM openjdk:8-jdk
+FROM picoded/ubuntu-openjdk-8-jdk
+
 
 WORKDIR /opt
-
+RUN cat /etc/debian_version
 ENV GATLING_VERSION 2.3.1
 ENV lg_name perfgun
 ENV lg_id 1
@@ -13,19 +14,23 @@ RUN mkdir -p gatling
 
 COPY rp_client_3.2.zip /tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget curl build-essential python-dev python-pip git sudo && \
-    pip install --upgrade pip && apt-get clean
+# Install utilities
+RUN add-apt-repository ppa:jonathonf/python-3.6 && apt-get update && \
+    apt-get install -y --no-install-recommends bash sudo git wget python3.6 python3.6-dev && \
+    wget https://bootstrap.pypa.io/get-pip.py && python3.6 get-pip.py && \
+    ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
+    ln -s /usr/bin/python3.6 /usr/local/bin/python && \
+    python -m pip install --upgrade pip && \
+    apt-get clean && \
+    python -m pip install setuptools==40.6.2 && \
+    python -m pip install /tmp/rp_client_3.2.zip 'common==0.1.2' 'configobj==5.0.6' 'numpy==1.16.0' 'PyYAML==3.13' \
+    'jira==2.0.0' 'influxdb==5.2.0' 'argparse==1.4.0' 'requests==2.19.1' 'python-logging-loki==0.1.0' && \
+    rm -rf /tmp/*
 
 # Creating carrier user and making him sudoer
 RUN groupadd -g $GID $UNAME
 RUN useradd -m -u $UID -g $GID -s /bin/bash $UNAME
 RUN echo "carrier    ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-RUN pip install setuptools==40.6.2
-RUN pip install /tmp/rp_client_3.2.zip 'configobj==5.0.6' 'requests==2.19.1' 'common==0.1.2' \
-    'influxdb==5.2.0' 'argparse==1.4.0' 'numpy==1.15.4' 'PyYAML==3.13' 'jira==2.0.0' && \
-    rm -rf /tmp/*
 
 # Installing Java Jolokia
 RUN  mkdir /opt/java && cd /opt/java \
