@@ -39,7 +39,7 @@ class SimulationLogParser(object):
             client.close()
         except:
             print("Failed connection to " + self.args["influx_host"] + ", database - " + self.args['gatling_db'])
-        if args['build_id'] != "None":
+        if args['build_id']:
             build_id = args['build_id']
         else:
             date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')

@@ -10,6 +10,7 @@ export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml
 export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
 export report_portal=$(python -c "import yaml; print (yaml.load(open('/tmp/config.yaml').read()).get('reportportal',{}))")
 export jira=$(python -c "import yaml; print(yaml.load(open('/tmp/config.yaml').read()).get('jira',{}))")
+export loki=$(python -c "import yaml; print(yaml.load(open('/tmp/config.yaml').read()).get('loki',{}))")
 else
 export influx_host="None"
 export jira="{}"
@@ -17,10 +18,6 @@ export report_portal="{}"
 fi
 if [[ -z "${test_type}" ]]; then
 export test_type="test"
-fi
-
-if [[ -z "${build_id}" ]]; then
-export build_id="None"
 fi
 
 if [[ -z "${env}" ]]; then
@@ -71,11 +68,16 @@ export simulation_folder=$(python -c "from os import environ; print(environ['tes
 if [[ "${influx_host}" != "None" ]]; then
 echo "Tests are done"
 echo "Generating metrics for comparison table ..."
-python compare_build_metrix.py -t $test_type -l ${lg_id} -b ${build_id} -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
+if [[ -z "${build_id}" ]]; then
+export _build_id=""
+else
+export _build_id="-b ${build_id}"
+fi
+python compare_build_metrix.py -t $test_type -l ${lg_id} ${_build_id} -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
 else
 echo "Tests are done"
 fi
-if [[ "${report_portal}" != "{}" || "${jira}" != "{}" ]]; then
+if [[ "${report_portal}" != "{}" || "${jira}" != "{}" || "${loki}" != "{}" ]]; then
 echo "Parsing errors ..."
 python logparser.py -t $test_type -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
 fi
