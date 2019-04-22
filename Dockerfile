@@ -2,7 +2,6 @@ FROM picoded/ubuntu-openjdk-8-jdk
 
 
 WORKDIR /opt
-RUN cat /etc/debian_version
 ENV GATLING_VERSION 2.3.1
 ENV lg_name perfgun
 ENV lg_id 1
