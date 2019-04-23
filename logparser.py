@@ -12,6 +12,8 @@ import warnings
 import requests
 import contextlib
 import os
+import logging
+import logging_loki
 
 import re
 from jira import JIRA
@@ -61,7 +63,7 @@ class SimulationLogParser(object):
                 user_count = int(raw['user_count'])
         except:
             print("Failed connection to " + self.args["influx_host"] + ", database - " + self.args['gatling_db'])
-        with open(path) as tsv:
+        with open(path, 'r+', encoding="utf-8") as tsv:
             for entry in csv.DictReader(tsv, delimiter="\t", fieldnames=FIELDNAMES, restval="not_found"):
                 if len(entry) >= 8 and (entry['status'] == "KO"):
                     try:
@@ -70,20 +72,22 @@ class SimulationLogParser(object):
                         data['user_count'] = user_count
                         data["request_params"] = self.remove_session_id(data["request_params"])
                         count = 1
-                        key = "%s_%s_%s" % (data['request_name'], data['error_code'], data['response_code'])
+                        key = "%s_%s_%s" % (data['request_name'], data['request_method'], data['response_code'])
                         if key not in errors:
                             errors[key] = {"Request name": data['request_name'], "Method": data['request_method'],
                                            "Request headers": data["headers"], 'Error count': count,
                                            "Response code": data['response_code'], "Error code": data['error_code'],
-                                           "Request URL": data['request_url'], "Request_params": [], "Response": [],
-                                           "Gatling_error": []}
-                        for field in ERROR_FIELDS:
-                            same = self.check_dublicate(errors[key], data, field)
-                            if same is True:
-                                errors[key]['Error count'] += 1
-                                break
-                            else:
-                                errors[key][field].append(data[field.lower()])
+                                           "Request URL": data['request_url'],
+                                           "Request_params": [data['request_params']], "Response": [data['response']],
+                                           "Gatling_error": [data['gatling_error']]}
+                        else:
+                            errors[key]['Error count'] += 1
+                            for field in ERROR_FIELDS:
+                                same = self.check_dublicate(errors[key], data, field)
+                                if same is True:
+                                    break
+                                else:
+                                    errors[key][field].append(data[field.lower()])
                     except:
                         unparsed_counter += 1
                         pass
@@ -115,8 +119,8 @@ class SimulationLogParser(object):
         values['response_code'] = self.extract_response_code(values['error'])
         values['error_code'] = self.extract_error_code(values['error'])
         values['request_url'], values['request_params'], values['request_method'] = self.parse_request(values['error'])
-        values['headers'] = self.escape_for_json(self.parse_headers(values['error']))
-        values['response'] = self.parse_response(values['error'])
+        values['headers'] = self.html_decode(self.escape_for_json(self.parse_headers(values['error'])))
+        values['response'] = self.html_decode(self.parse_response(values['error']))
         values['error'] = self.escape_for_json(values['error'])
         values['gatling_error'] = self.escape_for_json(values['gatling_error'])
 
@@ -142,6 +146,24 @@ class SimulationLogParser(object):
             return code_regexp.group(2)
         return UNDEFINED
 
+    def html_decode(self, s):
+        html_codes = (
+            ("'", '&#39;'),
+            ("/", '&#47;'),
+            ('"', '&quot;'),
+            (':', '%3A'),
+            ('/', '%2F'),
+            ('.', '%2E'),
+            ('&', '&amp;'),
+            ('>', '&gt;'),
+            ('|', '%7C'),
+            ('<', '&lt;'),
+            ('\\"', '"')
+        )
+        for code in html_codes:
+            s = s.replace(code[1], code[0])
+        return s
+
     def escape_for_json(self, string):
         if isinstance(string, str):
             return string.replace('"', '&quot;') \
@@ -159,7 +181,7 @@ class SimulationLogParser(object):
             params = request_parts[len(request_parts) - 1] if len(request_parts) >= 2 else ''
             params = params + " " + self.parse_params(param)
             params = params.replace(":", "=")
-            url = self.escape_for_json(url)
+            url = self.html_decode(self.escape_for_json(url))
             params = self.escape_for_json(params)
             method = re.search(r" ([A-Z]+) headers", param).group(1)
             return url, params, method
@@ -487,6 +509,30 @@ def report_errors(errors, args):
     if config:
         report_types = list(config.keys())
 
+    if report_types.__contains__('loki'):
+        loki_host = config['loki'].get("host")
+        loki_port = config['loki'].get("port")
+        if not all([loki_host, loki_port]):
+            print("Loki configuration values missing, proceeding "
+                  "without Loki")
+        else:
+            loki_url = "{}:{}/api/prom/push".format(loki_host, loki_port)
+            handler = logging_loki.LokiHandler(
+                url=loki_url,
+                tags={"Test": args['simulation']},
+            )
+            error_message = "Error key: {};; Error count: {};; Request name: {};; Method: {};; Response code: {};;" \
+                            " URL: {};; Error message: {};; Request params: {};; Headers: {};; Response body: {};;"
+            logger = logging.getLogger("error-logger")
+            logger.addHandler(handler)
+            for error in errors:
+                logger.error(
+                    error_message.format(error, str(errors[error]['Error count']), str(errors[error]['Request name']),
+                                         str(errors[error]['Method']), str(errors[error]['Response code']),
+                                         str(errors[error]['Request URL']), str(errors[error]['Gatling_error']),
+                                         str(errors[error]['Request_params']), str(errors[error]['Request headers']),
+                                         str(errors[error]['Response'])),
+                )
     rp_service = None
     if report_types.__contains__('reportportal'):
         rp_project = config['reportportal'].get("rp_project_name")

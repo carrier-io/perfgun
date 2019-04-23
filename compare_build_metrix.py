@@ -26,9 +26,7 @@ class SimulationLogParser(object):
         simulation = self.args['simulation']
         path = self.find_log() if self.args['file'] is None else self.args['file']
         reqs = dict()
-        test_time = time()
-        test_start = time()
-        test_end = 0
+        timestamp = time()
         user_count = 0
         try:
             client = InfluxDBClient(self.args["influx_host"], self.args['influx_port'], username='', password='',
@@ -41,15 +39,20 @@ class SimulationLogParser(object):
             client.close()
         except:
             print("Failed connection to " + self.args["influx_host"] + ", database - " + self.args['gatling_db'])
-        build_id = "{}_{}_{}".format(self.args['type'], user_count,
-                                     datetime.datetime.fromtimestamp(test_time).strftime('%Y-%m-%dT%H:%M:%SZ'))
-        with open(path) as tsv:
+        if args['build_id']:
+            build_id = args['build_id']
+        else:
+            date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
+            build_id = "{}_{}_{}".format(self.args['type'], user_count, date)
+        if args['lg_id']:
+            lg_id = args['lg_id']
+        else:
+            date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
+            lg_id = "LG_{}".format(date)
+        with open(path, 'r+', encoding="utf-8") as tsv:
             for entry in csv.DictReader(tsv, delimiter="\t", fieldnames=FIELDNAMES, restval="not_found"):
                 if entry['action'] == "REQUEST":
                     try:
-                        test_start = test_start if int(entry['request_start']) > test_start else int(
-                            entry['request_start'])
-                        test_end = test_end if int(entry['request_end']) < test_end else int(entry['request_end'])
                         data = self.parse_entry(entry)
                         data['simulation'] = simulation
                         data['user_count'] = user_count
@@ -88,11 +91,12 @@ class SimulationLogParser(object):
                     "users": user_count,
                     "test_type": self.args["type"],
                     "build_id": build_id,
+                    "lg_id": lg_id,
                     "request_name": reqs[req]['request_name'],
                     "method": reqs[req]['method'],
                     "duration": int(self.args['end_time'])/1000 - int(self.args['start_time'])/1000
                 },
-                "time": datetime.datetime.fromtimestamp(test_time).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "time": datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "fields": {
                     "throughput": round(float(len(reqs[req]["times"])*1000)/float(int(self.args['end_time'])-int(self.args['start_time'])), 3),
                     "total": len(reqs[req]["times"]),
@@ -113,7 +117,6 @@ class SimulationLogParser(object):
                     "pct95": np.percentile(np_arr, 95, interpolation="higher"),
                     "pct99": np.percentile(np_arr, 99, interpolation="higher")
                 }
-
             }
             points.append(influx_record)
         try:
@@ -191,6 +194,8 @@ class SimulationLogParser(object):
 def parse_args():
     parser = argparse.ArgumentParser(description='Simlog parser.')
     parser.add_argument("-f", "--file", help="file path", default=None)
+    parser.add_argument("-b", "--build_id", help="build ID", default=None)
+    parser.add_argument("-l", "--lg_id", help="load generator ID", default=None)
     parser.add_argument("-t", "--type", help="Test type.", default="test")
     parser.add_argument("-s", "--simulation", help='Test simulation', default=None)  # should be the same as on Grafana
     parser.add_argument("-st", "--start_time", help='Test start time', default=None)

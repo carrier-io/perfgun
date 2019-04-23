@@ -20,3 +20,6 @@
 #  graphite_port: 2003                                # Graphite port (Default: 2003)
 #  gatling_db: gatling                                # Database name for gatling test results (Default: gatling)
 #  comparison_db: comparison                          # Database name for comparison builds (Default: comparison)
+#loki:
+#  host: http://loki                                  # Loki host DNS or IP
+#  port: 3100                                         # Loki port
