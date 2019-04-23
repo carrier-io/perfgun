@@ -1,5 +1,13 @@
-FROM picoded/ubuntu-openjdk-8-jdk
+FROM ubuntu:16.04
 
+#Install Open JDK 8
+
+RUN apt-get update \
+    && apt-get -y install openjdk-8-jdk software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+ENV PATH $JAVA_HOME/bin:$PATH
 
 WORKDIR /opt
 ENV GATLING_VERSION 2.3.1
@@ -15,7 +23,7 @@ COPY rp_client_3.2.zip /tmp
 
 # Install utilities
 RUN add-apt-repository ppa:jonathonf/python-3.6 && apt-get update && \
-    apt-get install -y --no-install-recommends bash sudo git wget python3.6 python3.6-dev && \
+    apt-get install -y --no-install-recommends bash sudo unzip git wget python3.6 python3.6-dev && \
     wget https://bootstrap.pypa.io/get-pip.py && python3.6 get-pip.py && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python && \
