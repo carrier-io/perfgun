@@ -27,24 +27,13 @@ class SimulationLogParser(object):
         path = self.find_log() if self.args['file'] is None else self.args['file']
         reqs = dict()
         timestamp = time()
-        user_count = 0
-        try:
-            client = InfluxDBClient(self.args["influx_host"], self.args['influx_port'], username='', password='',
-                                    database=self.args['gatling_db'])
-            raws = client.query("SELECT * FROM " + self.args['type'] + " WHERE simulation=\'" + simulation +
-                                "\' and status='ok' and time >= " + str(self.args['start_time']) + "ms and time <= "
-                                + str(self.args['end_time']) + "ms limit 1")
-            for raw in list(raws.get_points()):
-                user_count = int(raw['user_count'])
-            client.close()
-        except:
-            print("Failed connection to " + self.args["influx_host"] + ", database - " + self.args['gatling_db'])
+        user_count = 0 if self.args['users'] is None else self.args['users']
         if args['build_id']:
             build_id = args['build_id']
         else:
             date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
             build_id = "{}_{}_{}".format(self.args['type'], user_count, date)
-        if args['lg_id']:
+        if int(self.args['lg_id']) != 1:
             lg_id = args['lg_id']
         else:
             date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -111,11 +100,11 @@ class SimulationLogParser(object):
                     "min": round(np_arr.min(), 2),
                     "max": round(np_arr.max(), 2),
                     "mean": round(np_arr.mean(), 2),
-                    "pct50": np.percentile(np_arr, 50, interpolation="higher"),
-                    "pct75": np.percentile(np_arr, 75, interpolation="higher"),
-                    "pct90": np.percentile(np_arr, 90, interpolation="higher"),
-                    "pct95": np.percentile(np_arr, 95, interpolation="higher"),
-                    "pct99": np.percentile(np_arr, 99, interpolation="higher")
+                    "pct50": int(np.percentile(np_arr, 50, interpolation="higher")),
+                    "pct75": int(np.percentile(np_arr, 75, interpolation="higher")),
+                    "pct90": int(np.percentile(np_arr, 90, interpolation="higher")),
+                    "pct95": int(np.percentile(np_arr, 95, interpolation="higher")),
+                    "pct99": int(np.percentile(np_arr, 99, interpolation="higher"))
                 }
             }
             points.append(influx_record)
@@ -124,7 +113,8 @@ class SimulationLogParser(object):
                                 username='', password='', database=self.args['comparison_db'])
             client.write_points(points)
             client.close()
-        except:
+        except Exception as e:
+            print(e)
             print("Failed connection to " + self.args["influx_host"] + ", database - comparison")
 
     @staticmethod
@@ -200,6 +190,7 @@ def parse_args():
     parser.add_argument("-s", "--simulation", help='Test simulation', default=None)  # should be the same as on Grafana
     parser.add_argument("-st", "--start_time", help='Test start time', default=None)
     parser.add_argument("-et", "--end_time", help='Test end time', default=None)
+    parser.add_argument("-u", "--users", help='Users count', default=None)
     parser.add_argument("-i", "--influx_host", help='InfluxDB host or IP', default=None)
     parser.add_argument("-p", "--influx_port", help='InfluxDB port', default=None)
     parser.add_argument("-gdb", "--gatling_db", help='Gatling DB', default=None)

@@ -15,6 +15,7 @@ else
 export influx_host="None"
 export jira="{}"
 export report_portal="{}"
+export loki="{}"
 fi
 if [[ -z "${test_type}" ]]; then
 export test_type="test"
@@ -73,7 +74,7 @@ export _build_id=""
 else
 export _build_id="-b ${build_id}"
 fi
-python compare_build_metrix.py -t $test_type -l ${lg_id} ${_build_id} -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
+python compare_build_metrix.py -t $test_type -l ${lg_id} ${_build_id} -s $tokenized -u $users -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
 else
 echo "Tests are done"
 fi
