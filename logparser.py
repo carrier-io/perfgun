@@ -62,14 +62,14 @@ class SimulationLogParser(object):
                         data["request_params"] = self.remove_session_id(data["request_params"])
                         request_start = datetime.datetime.utcfromtimestamp(int(data['request_start']) / 1000000000) \
                                                 .strftime('%Y-%m-%d %H:%M:%S')
+                        key = "%s_%s_%s" % (data['request_name'], data['request_method'], data['response_code'])
                         errors.append({"Request name": data['request_name'], "Method": data['request_method'],
                                        "Request headers": data["headers"], 'Time': request_start,
                                        "Response code": data['response_code'], "Error code": data['error_code'],
                                        "Request URL": data['request_url'],
                                        "Request_params": data['request_params'], "Response": data['response'],
-                                       "Error_message": data['error_message']})
+                                       "Error_message": data['error_message'], "error_key": key})
                         count = 1
-                        key = "%s_%s_%s" % (data['request_name'], data['request_method'], data['response_code'])
                         if key not in aggregated_errors:
                             aggregated_errors[key] = {"Request name": data['request_name'], "Method": data['request_method'],
                                            "Request headers": data["headers"], 'Error count': count,
@@ -519,13 +519,13 @@ def report_errors(aggregated_errors, errors, args):
                 url=loki_url,
                 tags={"Test": args['simulation']},
             )
-            error_message = "UTC Time: {};; Request name: {};; Method: {};; Response code: {};;" \
+            error_message = "Error key: {};; UTC Time: {};; Request name: {};; Method: {};; Response code: {};;" \
                             " URL: {};; Error message: {};; Request params: {};; Headers: {};; Response body: {};;"
             logger = logging.getLogger("error-logger")
             logger.addHandler(handler)
             for error in errors:
                 logger.error(
-                    error_message.format(str(error['Time']), str(error['Request name']),
+                    error_message.format(str(error['error_key']), str(error['Time']), str(error['Request name']),
                                          str(error['Method']), str(error['Response code']),
                                          str(error['Request URL']), str(error['Error_message']),
                                          str(error['Request_params']), str(error['Request headers']),
