@@ -1,4 +1,4 @@
-# perfgun
+# perfgun release-1.0
 *Carrier customized Gatling container*
 
 ### Quick and easy start
