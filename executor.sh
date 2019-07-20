@@ -1,6 +1,12 @@
 #!/bin/bash
 
-export tokenized=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower())")
+if [[ $test == *"."* ]]; then
+export simulation_name=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower())")
+export simulation_folder=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower().replace('_', '-'))")
+else
+export simulation_name=$(python -c "from os import environ; print(environ['test'].lower())")
+export simulation_folder=$(python -c "from os import environ; print(environ['test'].lower().replace('_', '-'))")
+fi
 export config=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()); print(y)")
 if [[ "${config}" != "None" ]]; then
 export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('host'))")
@@ -35,7 +41,7 @@ else
 export influx_piece=""
 fi
 
-sudo sed -i "s/LOAD_GENERATOR_NAME/${lg_name}_${tokenized}_${lg_id}/g" /etc/telegraf/telegraf.conf
+sudo sed -i "s/LOAD_GENERATOR_NAME/${lg_name}_${simulation_name}_${lg_id}/g" /etc/telegraf/telegraf.conf
 sudo sed -i "s/INFLUX_HOST/http:\/\/${influx_host}:${influx_port}/g" /etc/telegraf/telegraf.conf
 sudo service telegraf restart
 DEFAULT_EXECUTION="/usr/bin/java"
@@ -64,8 +70,6 @@ echo "Starting simulation: ${test}"
 
 end_time=$(date +%s)000
 
-export simulation_folder=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower().replace('_', '-'))")
-
 if [[ "${influx_host}" != "None" ]]; then
 echo "Tests are done"
 echo "Generating metrics for comparison table ..."
@@ -74,11 +78,11 @@ export _build_id=""
 else
 export _build_id="-b ${build_id}"
 fi
-python compare_build_metrix.py -t $test_type -l ${lg_id} ${_build_id} -s $tokenized -u $users -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
+python compare_build_metrix.py -t $test_type -l ${lg_id} ${_build_id} -s $simulation_name -u $users -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
 else
 echo "Tests are done"
 fi
 if [[ "${report_portal}" != "{}" || "${jira}" != "{}" || "${loki}" != "{}" ]]; then
 echo "Parsing errors ..."
-python logparser.py -t $test_type -s $tokenized -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
+python logparser.py -t $test_type -s $simulation_name -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
 fi
