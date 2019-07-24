@@ -399,7 +399,7 @@ class JiraWrapper:
         _labels.extend(self.labels)
         issue_data = {
             'project': {'key': self.project},
-            'summary': re.sub('[^A-Za-z0-9//\. _]+', '', title),
+            'summary': title,
             'description': description,
             'issuetype': {'name': self.issue_type},
             'assignee': {'name': self.assignee},
@@ -457,22 +457,34 @@ class JiraWrapper:
 
 
 def create_description(error, arguments):
-    description = ""
-    if arguments['simulation']:
-        description += "*Simulation*: " + arguments['simulation'] + "\n"
+    title = "Functional error in test: " + str(arguments['simulation']) + ". Request \"" \
+            + str(error['Request name']) + "\"."
+    description = "{panel:title=" + title + \
+        "|borderStyle=solid|borderColor=#ccc|titleBGColor=#23b7c9|bgColor=#d7f0f3} \n"
+    description += "h3. Request description\n"
+    if error['Request name']:
+        description += "*Request name*: " + error['Request name'] + "\n"
+    if error['Method']:
+        description += "*HTTP Method*: " + error['Method'] + "\n"
     if error['Request URL']:
         description += "*Request URL*: " + error['Request URL'] + "\n"
-    if error['Request_params']:
+    if error['Request_params'] and str(error['Request_params']) != " ":
         description += "*Request params*: " + str(error['Request_params'])[2:-2].replace(" ", "\n") + "\n"
+    if error['Request headers']:
+        description += "*Request headers*: {code}"
+        for header in str(error['Request headers']).split(" "):
+            description += header + "\n"
+        description += "{code}\n"
+    description += "---- \n h3. Error description\n"
     if error['Error_message']:
-        description += "*Gatling error*: " + str(error['Error_message']) + "\n"
+        description += "*Error message*: {color:red}" + str(error['Error_message']) + "{color}\n"
     if error['Error count']:
-        description += "*Error count*: " + str(error['Error count']) + "\n"
+        description += "*Error count*: " + str(error['Error count']) + ";\n"
     if error['Response code']:
-        description += "*Response code*: " + error['Response code'] + "\n"
+        description += "*Response code*: " + error['Response code'] + ";\n"
     if error['Response']:
-        description += "*Response body*: " + str(error['Response']).replace("\n", "") + "\n"
-
+        description += "---- \n h3. Response body {code:html}" + str(error['Response']) + "{code}"
+    description += "{panel}"
     return description
 
 
@@ -568,8 +580,11 @@ def report_errors(aggregated_errors, errors, args):
         if jira_service.valid:
             for error in aggregated_errors:
                 issue_hash = get_hash_code(aggregated_errors[error], args)
+                title = "Functional error in test: " + str(args['simulation']) + ". Request \"" \
+                        + str(aggregated_errors[error]['Request name']) + "\" failed with error message: " \
+                        + str(aggregated_errors[error]['Error_message'])[0:100]
                 description = create_description(aggregated_errors[error], args)
-                jira_service.create_issue(aggregated_errors[error]['Request name'], 'Major', description, issue_hash)
+                jira_service.create_issue(title, 'Major', description, issue_hash)
         else:
             print("Failed connection to Jira or project does not exist")
 
