@@ -17,12 +17,11 @@ class Flood extends Simulation {
     .baseURL(environment)
     .disableCaching
     .disableFollowRedirect
-    //.extraInfoExtractor(extraInfo => print_error_processor(extraInfo))
 
   def flood_io: ScenarioBuilder = {
     scenario("flood_io")
       .during(duration, exitASAP = true) {
-        tryMax(50) {
+        tryMax(10) {
           exec(Step1GET)
             .exec(Step1POST)
             .exec(Step2GET)
@@ -34,8 +33,8 @@ class Flood extends Simulation {
             .exec(dataJSON)
             .exec(Step5GET)
             .exec(Step5POST)
-            .randomSwitch(10.0 -> exec(FinalStep),
-              90.0 -> exec(failedFinalStep))
+            .randomSwitch(80.0 -> exec(FinalStep),
+              20.0 -> exec(failedFinalStep))
         }.exitHereIfFailed
       }
   }

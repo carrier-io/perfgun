@@ -158,8 +158,6 @@ object requests {
 
   val failedFinalStep = exec(http("Final_Step")
     .get("/done")
-    .queryParam("milestone", "1")
-    .queryParam("state", "open")
     .headers(headers_5)
     .check(regex("You're Done!!!")))
 }
