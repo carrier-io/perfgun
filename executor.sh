@@ -15,13 +15,11 @@ export graphite_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.y
 export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('gatling_db', 'gatling'))")
 export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
 export report_portal=$(python -c "import yaml; print (yaml.load(open('/tmp/config.yaml').read()).get('reportportal',{}))")
-export jira=$(python -c "import yaml; print(yaml.load(open('/tmp/config.yaml').read()).get('jira',{}))")
-export loki=$(python -c "import yaml; print(yaml.load(open('/tmp/config.yaml').read()).get('loki',{}))")
+export loki_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('host'))")
+export loki_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('port'))")
 else
 export influx_host="None"
-export jira="{}"
-export report_portal="{}"
-export loki="{}"
+export loki_host="None"
 fi
 if [[ -z "${test_type}" ]]; then
 export test_type="test"
@@ -40,6 +38,11 @@ export influx_piece="-Dgatling.data.graphite.host=${influx_host} -Dgatling.data.
 else
 export influx_piece=""
 fi
+export lg_id="Lg_"$RANDOM"_"$RANDOM
+
+if [[ "${loki_host}" != "None" ]]; then
+/usr/bin/promtail --client.url=${loki_host}:${loki_port}/api/prom/push --client.external-labels=hostname=${lg_id} -config.file=/etc/promtail/docker-config.yaml &
+fi
 
 sudo sed -i "s/LOAD_GENERATOR_NAME/${lg_name}_${simulation_name}_${lg_id}/g" /etc/telegraf/telegraf.conf
 sudo sed -i "s/INFLUX_HOST/http:\/\/${influx_host}:${influx_port}/g" /etc/telegraf/telegraf.conf
@@ -56,7 +59,7 @@ export GATLING_CONF="${GATLING_HOME}/conf"
 export COMPILER_CLASSPATH="${GATLING_HOME}/lib/zinc/*:${GATLING_CONF}:"
 export GATLING_CLASSPATH="${GATLING_HOME}/lib/*:${GATLING_HOME}/user-files:${GATLING_CONF}:"
 
-export JAVA_OPTS="-Dgatling.http.ahc.pooledConnectionIdleTimeout=150000 -Dgatling.http.ahc.readTimeout=150000 -Dgatling.http.ahc.requestTimeout=150000 ${influx_piece} -Dgatling.data.writers.0=console -Dgatling.data.writers.1=file -Dgatling.data.writers.2=graphite -Dcharting.indicators.lowerBound=2000 -Dcharting.indicators.higherBound=3000 ${GATLING_TEST_PARAMS}"
+export JAVA_OPTS="-Dtest_name=${simulation_name} -Dgatling.http.ahc.pooledConnectionIdleTimeout=150000 -Dgatling.http.ahc.readTimeout=150000 -Dgatling.http.ahc.requestTimeout=150000 ${influx_piece} -Dgatling.data.writers.0=console -Dgatling.data.writers.1=file -Dgatling.data.writers.2=graphite -Dcharting.indicators.lowerBound=2000 -Dcharting.indicators.higherBound=3000 ${GATLING_TEST_PARAMS}"
 
 echo $JAVA_OPTS
 export COMPILER_OPTS="-Xss100M ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS}"
@@ -70,19 +73,16 @@ echo "Starting simulation: ${test}"
 
 end_time=$(date +%s)000
 
+if [[ -z "${build_id}" ]]; then
+export build_id=${simulation_name}"_"${test_type}"_"$RANDOM
+fi
+
 if [[ "${influx_host}" != "None" ]]; then
 echo "Tests are done"
 echo "Generating metrics for comparison table ..."
-if [[ -z "${build_id}" ]]; then
-export _build_id=""
-else
-export _build_id="-b ${build_id}"
-fi
-python compare_build_metrix.py -t $test_type -l ${lg_id} ${_build_id} -s $simulation_name -u $users -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
+python compare_build_metrix.py -t $test_type -l ${lg_id} -b ${build_id} -s $simulation_name -u $users -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -cdb ${comparison_db}
 else
 echo "Tests are done"
 fi
-if [[ "${report_portal}" != "{}" || "${jira}" != "{}" || "${loki}" != "{}" ]]; then
 echo "Parsing errors ..."
-python logparser.py -t $test_type -s $simulation_name -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -gdb ${gatling_db} -f /opt/gatling/results/$(ls /opt/gatling/results/ | grep $simulation_folder)/simulation.log
-fi
+python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -st ${start_time} -et ${end_time} -i ${influx_host} -p ${influx_port} -idb ${gatling_db}
