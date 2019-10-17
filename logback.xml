@@ -1,22 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-                <encoder>
-                        <pattern>%d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern>
-                        <immediateFlush>false</immediateFlush>
-                </encoder>
-        </appender>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern>
+            <immediateFlush>false</immediateFlush>
+        </encoder>
+    </appender>
 
-        <!-- Uncomment for logging ALL HTTP request and responses -->
-        <!--    <logger name="io.gatling.http.ahc" level="TRACE" /> -->
-        <!--    <logger name="io.gatling.http.response" level="TRACE" /> -->
-        <!-- Uncomment for logging ONLY FAILED HTTP request and responses -->
-        <!--    <logger name="io.gatling.http.ahc" level="DEBUG" /> -->
-        <!--    <logger name="io.gatling.http.response" level="DEBUG" /> -->
+    <appender name="ERRORS" class="ch.qos.logback.core.FileAppender">
+        <file>logs/errors/${test_name}.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <append>true</append>
+        <encoder>
+            <pattern>%msg%n%rEx</pattern>
+        </encoder>
+    </appender>
 
-        <root level="ERROR">
-                <appender-ref ref="CONSOLE" />
-        </root>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/comparison.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>TRACE</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <append>true</append>
+        <encoder>
+            <pattern>%msg%n%rEx</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="io.gatling.http.ahc.ResponseProcessor" level="TRACE"/>
+
+    <root level="ERROR">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERRORS"/>
+    </root>
 
 </configuration>

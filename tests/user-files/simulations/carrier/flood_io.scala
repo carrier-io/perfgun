@@ -17,7 +17,6 @@ class Flood extends Simulation {
     .baseURL(environment)
     .disableCaching
     .disableFollowRedirect
-    .extraInfoExtractor(extraInfo => print_error_processor(extraInfo))
 
   def flood_io: ScenarioBuilder = {
     scenario("flood_io")
