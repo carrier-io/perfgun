@@ -1,9 +1,14 @@
-  #Reporting configuration section (all report types are optional)
+# Reporting configuration section (all report types are optional)
 #reportportal:                                        # ReportPortal.io specific section
 #  rp_host: https://rp.com                            # url to ReportPortal.io deployment
 #  rp_token: XXXXXXXXXXXXX                            # ReportPortal authentication token
 #  rp_project_name: XXXXXX                            # Name of a Project in ReportPortal to send results to
 #  rp_launch_name: XXXXXX                             # Name of a launch in ReportPortal to send results to
+#  check_functional_errors: False                     # Perform analysis by functional error. False or True (Default: False)
+#  check_performance_degradation: False               # Perform analysis compared to baseline False or True (Default: False)
+#  check_missed_thresholds: False                     # Perform analysis by exceeding thresholds False or True (Default: False)
+#  performance_degradation_rate: 20                   # Minimum performance degradation rate at which to create a launch (Default: 20)
+#  missed_thresholds_rate: 50                         # Minimum missed thresholds rate at which to create a launch (Default: 50)
 #jira:
 #  url: https://jira.com                              # Url to Jira
 #  username: some.dude                                # User to create tickets
@@ -14,11 +19,17 @@
 #  labels: Performance, perfgun                       # Comaseparated list of lables for ticket
 #  watchers: another.dude                             # Comaseparated list of Jira IDs for watchers
 #  jira_epic_key: XYZC-123                            # Jira epic key (or id)
+#  check_functional_errors: False                     # Perform analysis by functional error False or True (Default: False)
+#  check_performance_degradation: False               # Perform analysis compared to baseline False or True (Default: False)
+#  check_missed_thresholds: False                     # Perform analysis by exceeding thresholds False or True (Default: False)
+#  performance_degradation_rate: 20                   # Minimum performance degradation rate at which to create a JIRA ticket (Default: 20)
+#  missed_thresholds_rate: 50                         # Minimum missed thresholds rate at which to create a JIRA ticket (Default: 50)
 #influx:
 #  host: carrier_influx                               # Influx host DNS or IP
-#  port: 8086                                         # Influx port (Default: 8086)
-#  graphite_port: 2003                                # Graphite port (Default: 2003)
-#  gatling_db: gatling                                # Database name for gatling test results (Default: gatling)
+#  port: 8086                                         # Influx port
+#  user: ""                                           # Influx user (login) (Default: "")
+#  password: ""                                       # Influx password (Default: "")
+#  influx_db: gatling                                 # Database name for gatling test results (Default: gatling)
 #  comparison_db: comparison                          # Database name for comparison builds (Default: comparison)
 #loki:
 #  host: http://loki                                  # Loki host DNS or IP

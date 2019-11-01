@@ -14,8 +14,6 @@ object requests {
     "X-Requested-With" -> "XMLHttpRequest",
     "Upgrade-Insecure-Requests" -> "1")
 
-  val ageFromCSV = csv("data/age.csv").circular
-
   val dataJSON = exec(http("Step5_GET_Code")
     .get("/code")
     .check(jsonPath("$.code").saveAs("dataJSON")))
@@ -47,21 +45,19 @@ object requests {
     .pause(1)
 
   val Step2POST =
-    feed(ageFromCSV)
-      .exec(http("Step2_POST")
+      exec(http("Step2_POST")
         .post("/start")
         .headers(headers_5)
         .formParam("utf8", "✓")
         .formParam("authenticity_token", "${token}")
         .formParam("challenger[step_id]", "${challenger2}")
         .formParam("challenger[step_number]", "${stepNumber2}")
-        .formParam("challenger[age]", "${age}")
+        .formParam("challenger[age]", "18")
         .formParam("commit", "Next"))
      .pause(1)
 
   val Step3GET =
-    feed(ageFromCSV)
-      .exec(http("Step3_GET")
+      exec(http("Step3_GET")
         .get("/step/3")
         .headers(headers_5)
         .check(regex("step_id.+?value=\"(.+?)\"").find.saveAs("challenger3"))
@@ -159,5 +155,7 @@ object requests {
   val failedFinalStep = exec(http("Final_Step")
     .get("/done")
     .headers(headers_5)
+    .queryParam("milestone", "1")
+    .queryParam("state", "open")
     .check(regex("You're Done!!!")))
 }
