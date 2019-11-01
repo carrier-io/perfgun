@@ -3,7 +3,6 @@ package carrier
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ScenarioBuilder
 import io.gatling.http.Predef._
-import carrier.utilities.common_functions.print_error_processor
 import carrier.requests.requests._
 
 class Flood extends Simulation {
@@ -14,7 +13,7 @@ class Flood extends Simulation {
   val duration = Integer.getInteger("duration")
 
   val webProtocol = http
-    .baseURL(environment)
+    .baseUrl(environment)
     .disableCaching
     .disableFollowRedirect
 
@@ -33,11 +32,11 @@ class Flood extends Simulation {
             .exec(dataJSON)
             .exec(Step5GET)
             .exec(Step5POST)
-            .randomSwitch(80.0 -> exec(FinalStep),
-              20.0 -> exec(failedFinalStep))
+            .randomSwitch(60.0 -> exec(FinalStep),
+              40.0 -> exec(failedFinalStep))
         }.exitHereIfFailed
       }
   }
 
-  setUp(flood_io.inject(rampUsers(ramp_users) over(ramp_duration seconds)).protocols(webProtocol))
+  setUp(flood_io.inject(rampUsers(ramp_users) during(ramp_duration seconds)).protocols(webProtocol))
 }
