@@ -37,10 +37,11 @@ RUN add-apt-repository ppa:jonathonf/python-3.6 && apt-get update && \
     python -m pip install --upgrade pip && \
     apt-get clean && \
     python -m pip install setuptools==40.6.2 && \
-    python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'numpy==1.16.0' 'influxdb==5.2.0' 'argparse==1.4.0' && \
+    python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' && \
     rm -rf /tmp/*
 
-RUN pip install git+https://github.com/carrier-io/perfreporter.git
+ENV need_new_build=9
+RUN pip install git+https://github.com/hunkom/perfreporter.git
 
 # Creating carrier user and making him sudoer
 RUN groupadd -g $GID $UNAME
@@ -53,9 +54,11 @@ RUN  mkdir /opt/java && cd /opt/java \
  http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.6.0/jolokia-jvm-1.6.0-agent.jar
 
 # Installing Telegraf
-RUN cd /tmp && wget https://dl.influxdata.com/telegraf/releases/telegraf_1.8.3-1_amd64.deb && \
-    dpkg -i telegraf_1.8.3-1_amd64.deb
+RUN cd /tmp && wget https://dl.influxdata.com/telegraf/releases/telegraf_1.10.4-1_amd64.deb && \
+    dpkg -i telegraf_1.10.4-1_amd64.deb
+
 COPY telegraf.conf /etc/telegraf/telegraf.conf
+COPY telegraf_test_results.conf /etc/telegraf/telegraf_test_results.conf
 COPY jolokia.conf /opt
 
 ENV PATH /opt/gatling/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
@@ -87,9 +90,8 @@ RUN wget -q -O /tmp/gatling-$GATLING_VERSION.zip https://repo1.maven.org/maven2/
 COPY executor.sh /opt/gatling/bin
 RUN sudo chmod +x /opt/gatling/bin/executor.sh
 COPY post_processing/post_processor.py /opt/gatling/bin
-COPY post_processing/error_parser.py /opt/gatling/bin
-COPY post_processing/compare_build_metrix.py /opt/gatling/bin
 COPY gatling-http-2.3.1.jar /opt/gatling/lib
+COPY gatling-core-2.3.1.jar /opt/gatling/lib
 COPY config.yaml /tmp/
 
 VOLUME ["/opt/gatling/conf", "/opt/gatling/results", "/opt/gatling/user-files"]

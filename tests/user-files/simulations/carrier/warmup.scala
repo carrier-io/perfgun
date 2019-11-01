@@ -11,7 +11,6 @@ class WarmUp extends Simulation {
     .baseURL("https://www.google.com")
     .disableCaching
     .disableFollowRedirect
-    .extraInfoExtractor(extraInfo => print_error_processor(extraInfo))
 
   def warmup: ScenarioBuilder = {
     scenario("warmup")

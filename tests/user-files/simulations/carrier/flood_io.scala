@@ -33,8 +33,8 @@ class Flood extends Simulation {
             .exec(dataJSON)
             .exec(Step5GET)
             .exec(Step5POST)
-            .randomSwitch(80.0 -> exec(FinalStep),
-              20.0 -> exec(failedFinalStep))
+            .randomSwitch(60.0 -> exec(FinalStep),
+              40.0 -> exec(failedFinalStep))
         }.exitHereIfFailed
       }
   }
