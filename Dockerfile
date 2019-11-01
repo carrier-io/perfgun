@@ -40,7 +40,6 @@ RUN add-apt-repository ppa:jonathonf/python-3.6 && apt-get update && \
     python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' && \
     rm -rf /tmp/*
 
-ENV need_new_build=9
 RUN pip install git+https://github.com/hunkom/perfreporter.git
 
 # Creating carrier user and making him sudoer
