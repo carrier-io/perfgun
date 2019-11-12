@@ -10,7 +10,7 @@ SECRET_KEY = environ.get('minio_secret_key')
 BUCKET = environ.get("minio_bucket")
 TEST = environ.get("minio_test")
 PATH_TO_FILE = f'/tmp/{TEST}'
-TESTS_PATH = environ.get("tests_path", '/opt/gatling/tests')
+TESTS_PATH = environ.get("tests_path", '/opt/gatling')
 
 if (not all(a for a in [URL, ACCESS_KEY, SECRET_KEY, BUCKET, TEST])):
     exit(0)

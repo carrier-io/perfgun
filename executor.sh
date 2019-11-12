@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export tests_path=/opt/gatling/tests
-
 if [[ $test == *"."* ]]; then
 export simulation_name=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower())")
 export simulation_folder=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower().replace('_', '-'))")
@@ -111,6 +109,7 @@ sudo service telegraf restart
 sudo telegraf -config /etc/telegraf/telegraf_test_results.conf &
 fi
 
+export tests_path=/opt/gatling
 python /opt/gatling/bin/minio_reader.py
 
 DEFAULT_EXECUTION="/usr/bin/java"
