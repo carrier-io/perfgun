@@ -25,6 +25,21 @@ export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml
 export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
 export loki_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('host'))")
 export loki_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('port'))")
+if [[ -z "${minio_url}" ]]; then
+export "minio_url=$(python -c \"import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('url'))\")"
+fi
+if [[ -z  "${minio_access_key}" ]]; then
+export minio_access_key=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('access_key'))")
+fi
+if [[ -z  "${minio_secret_key}" ]]; then
+export "minio_secret_key=$(python -c \"import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('secret_key'))\")"
+fi
+if [[ -z  "${minio_bucket}" ]]; then
+export minio_bucket=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('bucket'))")
+fi
+if [[ -z  "${minio_test}" ]]; then
+export minio_test=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('test'))")
+fi
 else
 export influx_host="None"
 export loki_host="None"
@@ -93,6 +108,10 @@ sudo sed -i "s/INFLUX_PASSWORD/${influx_password}/g" /etc/telegraf/telegraf_test
 sudo service telegraf restart
 sudo telegraf -config /etc/telegraf/telegraf_test_results.conf &
 fi
+
+export tests_path=/opt/gatling
+python /opt/gatling/bin/minio_reader.py
+
 DEFAULT_EXECUTION="/usr/bin/java"
 JOLOKIA_AGENT="-javaagent:/opt/java/jolokia-jvm-1.6.0-agent.jar=config=/opt/jolokia.conf"
 DEFAULT_JAVA_OPTS=" -server -Xms1g -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30"
@@ -102,8 +121,8 @@ DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:+OptimizeStringConcat -XX:+HeapDumpO
 DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false "
 export GATLING_HOME="/opt/gatling"
 export GATLING_CONF="${GATLING_HOME}/conf"
-export COMPILER_CLASSPATH="${GATLING_HOME}/lib/zinc/*:${GATLING_CONF}:"
 export GATLING_CLASSPATH="${GATLING_HOME}/lib/*:${GATLING_HOME}/user-files:${GATLING_CONF}:"
+export COMPILER_CLASSPATH="${GATLING_HOME}/lib/zinc/*:${GATLING_CLASSPATH}:"
 
 export JAVA_OPTS="-Dsimulation_name=${simulation_name} -Denv=${env} -Dtest_type=${test_type} -Dbuild_id=${build_id} -Dlg_id=${lg_id} -Dgatling.http.ahc.pooledConnectionIdleTimeout=150000 -Dgatling.http.ahc.readTimeout=150000 -Dgatling.http.ahc.requestTimeout=150000 -Dgatling.data.writers.0=console -Dgatling.data.writers.1=file -Dcharting.indicators.lowerBound=2000 -Dcharting.indicators.higherBound=3000 ${GATLING_TEST_PARAMS}"
 
