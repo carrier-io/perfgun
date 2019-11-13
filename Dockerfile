@@ -20,6 +20,7 @@ ENV PATH $JAVA_HOME/bin:$PATH
 
 WORKDIR /opt
 ENV GATLING_VERSION 3.1.3
+ENV compile false
 ENV lg_name perfgun
 ENV lg_id 1
 ARG UNAME=carrier

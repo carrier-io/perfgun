@@ -132,9 +132,11 @@ export COMPILATION_CLASSPATH=`find "${GATLING_HOME}/lib" -maxdepth 1 -name "*.ja
 cd /opt/gatling/bin
 
 echo "Starting simulation: ${test}"
+if [[ "${compile}" == true ]]; then
 "$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
+fi
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
-sleep 11s
+sleep 11s 
 
 if [[ -z "${redis_connection}" ]]; then
 export _redis_connection=""
