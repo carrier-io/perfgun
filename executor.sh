@@ -121,8 +121,8 @@ DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:+OptimizeStringConcat -XX:+HeapDumpO
 DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false "
 export GATLING_HOME="/opt/gatling"
 export GATLING_CONF="${GATLING_HOME}/conf"
-export COMPILER_CLASSPATH="${GATLING_HOME}/lib/zinc/*:${GATLING_CONF}:"
 export GATLING_CLASSPATH="${GATLING_HOME}/lib/*:${GATLING_HOME}/user-files:${GATLING_CONF}:"
+export COMPILER_CLASSPATH="${GATLING_HOME}/lib/zinc/*:${GATLING_CLASSPATH}:"
 
 export JAVA_OPTS="-Dsimulation_name=${simulation_name} -Denv=${env} -Dtest_type=${test_type} -Dbuild_id=${build_id} -Dlg_id=${lg_id} -Dgatling.http.ahc.pooledConnectionIdleTimeout=150000 -Dgatling.http.ahc.readTimeout=150000 -Dgatling.http.ahc.requestTimeout=150000 -Dgatling.data.writers.0=console -Dgatling.data.writers.1=file -Dcharting.indicators.lowerBound=2000 -Dcharting.indicators.higherBound=3000 ${GATLING_TEST_PARAMS}"
 
