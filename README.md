@@ -24,6 +24,7 @@ docker run --rm -t -u 0:0 \
        -e test=<simulation_name> \
        -e "GATLING_TEST_PARAMS=-DapiUrl=<url> -Dduration=60 ..." \  #optional
        -e "test_type=<test_type>" \  #optional, default - 'demo'
+       -e "compile=true" # optional, default - false
        -e "env=<env>" \  #optional, default - 'demo'
        -e "influxdb_host=<influx_host_DNS_or_IP>" \ 
        getcarrier/perfgun
@@ -42,6 +43,8 @@ docker run --rm -t -u 0:0 \
 `env` - optional tag, used to filter test results
 
 `influxdb_host` - InfluxDB host DNS or IP. See InfluxDB configuration below
+
+`compile` - ( true | false ) flag to either compile sources before execution or not. Compilation increase the time of execution.
 
 If your test requires **additional parameters**, such as user count, duration, and so on, they can be passed to GATLING_TEST_PARAMS with the -D option.
 
