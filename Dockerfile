@@ -38,7 +38,7 @@ RUN add-apt-repository ppa:jonathonf/python-3.6 && apt-get update && \
     python -m pip install --upgrade pip && \
     apt-get clean && \
     python -m pip install setuptools==40.6.2 && \
-    python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' 'minio==5.0.4' && \
+    python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' && \
     rm -rf /tmp/*
 
 RUN pip install git+https://github.com/carrier-io/perfreporter.git
@@ -91,6 +91,7 @@ COPY executor.sh /opt/gatling/bin
 RUN sudo chmod +x /opt/gatling/bin/executor.sh
 COPY post_processing/post_processor.py /opt/gatling/bin
 COPY pre_processing/minio_reader.py /opt/gatling/bin
+COPY pre_processing/minio_poster.py /opt/gatling/bin
 COPY gatling-http-3.1.3.jar /opt/gatling/lib
 COPY gatling-core-3.1.3.jar /opt/gatling/lib
 COPY config.yaml /tmp/

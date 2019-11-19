@@ -1,33 +1,24 @@
 from os import environ
-from minio import Minio
-from minio.error import ResponseError
+import requests
 from urllib.parse import urlparse
 import zipfile
+from traceback import format_exc
 
-URL = environ.get('minio_url')
-ACCESS_KEY = environ.get('minio_access_key')
-SECRET_KEY = environ.get('minio_secret_key')
-BUCKET = environ.get("minio_bucket")
-TEST = environ.get("minio_test")
+URL = environ.get('galloper_url')
+BUCKET = environ.get("bucket")
+TEST = environ.get("test")
 PATH_TO_FILE = f'/tmp/{TEST}'
 TESTS_PATH = environ.get("tests_path", '/opt/gatling')
 
-if (not all(a for a in [URL, ACCESS_KEY, SECRET_KEY, BUCKET, TEST])):
+if (not all(a for a in [URL, BUCKET, TEST])):
     exit(0)
 
-parsed = urlparse(URL)
-
-minioClient = Minio(parsed.netloc,
-                  access_key=ACCESS_KEY,
-                  secret_key=SECRET_KEY,
-                  secure=True if parsed.scheme == 'https' else False)
-
 try:
-    data = minioClient.get_object(BUCKET, TEST)
+    r = requests.get(f'{URL}/artifacts/{BUCKET}/{TEST}', allow_redirects=True)
     with open(PATH_TO_FILE, 'wb') as file_data:
-        for d in data.stream(32*1024):
-            file_data.write(d)
+        file_data.write(r.content)
     with zipfile.ZipFile(PATH_TO_FILE, 'r') as zip_ref:
         zip_ref.extractall(TESTS_PATH)
-except ResponseError as err:
-    print(err)
+except Exception:
+    print(format_exc())
+
