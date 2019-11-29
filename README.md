@@ -194,3 +194,47 @@ sh "cp -r ${WORKSPACE}/<path_to_user-files_folder> /opt/gatling"
 ```
 
 `<path_to_user-files_folder` - path in Jenkins workspace where stored Gatling simulation
+
+### getting tests from object storage
+
+In out oppinion tests on gatling should have 2 different stages - compilation and execution
+
+#### Tests compilation
+
+Precondition for compilation step is bucket availability in object storage
+
+1. To create a bucket open a galloper url in the browser e.g. `http://{{ galloper_url }}`
+2. Click on  Artifacts in the side menu
+3. Click on the Bucket icon in rite side of the page and choose `Create New Bucket`
+4. Name your bucket e.g. gatling
+
+Now you can compile your tests.
+
+In order to compile the tests and upload them to object storage please run the following command (with your values for `test`, `galloper_url`, `bucket` and `aftifact` as well as mount your folder with tests)
+
+Note: `artifact` should have .zip extention
+
+```
+docker run --rm -t -u 0:0 \
+           -v <your_local_path_to_tests>:/opt/gatling/user-files/ \ 
+           -e artifact="Flood.zip" \
+           -e galloper_url="http://{{ galloper_url }}" \
+           -e bucket="gatling" -e compile=true \
+        getcarrier/perfgun:latest
+```
+
+Once compilation completed you can find it in `http://{{ galloper_url }}/artifacts/{{ bucket }}` with the name `artifact`
+
+#### Execution
+
+Run the followinf command:
+
+```
+docker run --rm -t -u 0:0 \
+       -e test=carrier.Flood -e galloper_url="http://{{ galloper_url }}" \
+       -e bucket="gatling" -e artifact="Flood.zip" \
+       -e "GATLING_TEST_PARAMS=-DapiUrl=https://challengers.flood.io -Dduration=30 -Dramp_users=1 -Dramp_duration=1"  \
+       getcarrier/perfgun:latest
+```
+
+What it will do is copy saved artifact and execute simultion `carrier.Flood` with parameters from `GATLING_TEST_PARAMS`

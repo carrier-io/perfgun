@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [[ $test == *"."* ]]; then
-export simulation_name=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower())")
-export simulation_folder=$(python -c "from os import environ; print(environ['test'].split('.')[1].lower().replace('_', '-'))")
+export simulation_name=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').split('.')[1].lower())")
+export simulation_folder=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').split('.')[1].lower().replace('_', '-'))")
 else
-export simulation_name=$(python -c "from os import environ; print(environ['test'].lower())")
-export simulation_folder=$(python -c "from os import environ; print(environ['test'].lower().replace('_', '-'))")
+export simulation_name=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').lower())")
+export simulation_folder=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').lower().replace('_', '-'))")
 fi
 
 if [[ -z "${config_yaml}" ]]; then
@@ -25,21 +25,6 @@ export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml
 export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
 export loki_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('host'))")
 export loki_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('port'))")
-if [[ -z "${minio_url}" ]]; then
-export "minio_url=$(python -c \"import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('url'))\")"
-fi
-if [[ -z  "${minio_access_key}" ]]; then
-export minio_access_key=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('access_key'))")
-fi
-if [[ -z  "${minio_secret_key}" ]]; then
-export "minio_secret_key=$(python -c \"import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('secret_key'))\")"
-fi
-if [[ -z  "${minio_bucket}" ]]; then
-export minio_bucket=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('bucket'))")
-fi
-if [[ -z  "${minio_test}" ]]; then
-export minio_test=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('minio',{}); print(y.get('test'))")
-fi
 else
 export influx_host="None"
 export loki_host="None"
@@ -110,7 +95,9 @@ sudo telegraf -config /etc/telegraf/telegraf_test_results.conf &
 fi
 
 export tests_path=/opt/gatling
+if [[ "${compile}" != true ]]; then
 python /opt/gatling/bin/minio_reader.py
+fi
 
 DEFAULT_EXECUTION="/usr/bin/java"
 JOLOKIA_AGENT="-javaagent:/opt/java/jolokia-jvm-1.6.0-agent.jar=config=/opt/jolokia.conf"
@@ -135,7 +122,7 @@ echo "Starting simulation: ${test}"
 if [[ "${compile}" == true ]]; then
 "$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
 python3 minio_poster.py
-fi
+else
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
 sleep 11s 
 
@@ -164,3 +151,4 @@ export _influx_host=""
 fi
 
 python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_redis_connection} ${_influx_user} ${_influx_password}
+fi
