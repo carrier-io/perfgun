@@ -23,11 +23,15 @@ export influx_user=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yam
 export influx_password=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('password',''))")
 export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('influx_db', 'gatling'))")
 export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
-export loki_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('host'))")
-export loki_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('port'))")
+if [[ -z "${loki_host}" ]]; then
+export loki_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('host',''))")
+fi
+if [[ -z "${loki_port}" ]]; then
+export loki_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('port', '3100'))")
+fi
+
 else
 export influx_host="None"
-export loki_host="None"
 export influx_port=8086
 export gatling_db="gatling"
 export comparison_db="comparison"
@@ -77,7 +81,7 @@ fi
 
 export lg_id="Lg_"$RANDOM"_"$RANDOM
 
-if [[ "${loki_host}" != "None" ]]; then
+if [[ "${loki_host}" ]]; then
 /usr/bin/promtail --client.url=${loki_host}:${loki_port}/api/prom/push --client.external-labels=hostname=${lg_id} -config.file=/etc/promtail/docker-config.yaml &
 fi
 
@@ -124,13 +128,7 @@ if [[ "${compile}" == true ]]; then
 python3 minio_poster.py
 else
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
-sleep 11s 
-
-if [[ -z "${redis_connection}" ]]; then
-export _redis_connection=""
-else
-export _redis_connection="-r ${redis_connection}"
-fi
+sleep 11s
 
 if [[ -z "${influx_user}" ]]; then
 export _influx_user=""
@@ -150,5 +148,6 @@ else
 export _influx_host=""
 fi
 
-python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_redis_connection} ${_influx_user} ${_influx_password}
+mkdir '/tmp/data_for_post_processing'
+python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password}
 fi
