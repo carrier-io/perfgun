@@ -30,7 +30,7 @@ ARG GID=1001
 RUN mkdir -p gatling
 
 # Install utilities
-RUN add-apt-repository ppa:jonathonf/python-3.6 && apt-get update && \
+RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
     apt-get install -y --no-install-recommends bash sudo curl unzip git wget python3.6 python3.6-dev && \
     wget https://bootstrap.pypa.io/get-pip.py && python3.6 get-pip.py && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
