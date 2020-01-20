@@ -1,6 +1,6 @@
 FROM golang:1.13 as build
 
-RUN apt-get update && apt-get install -qy libsystemd-dev git
+RUN apt-get update && apt-get install -qy libsystemd-dev git protobuf-compiler
 
 WORKDIR /src
 RUN git clone https://github.com/grafana/loki.git
