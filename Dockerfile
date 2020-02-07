@@ -89,6 +89,8 @@ RUN wget -q -O /tmp/gatling-$GATLING_VERSION.zip https://repo1.maven.org/maven2/
 COPY executor.sh /opt/gatling/bin
 RUN sudo chmod +x /opt/gatling/bin/executor.sh
 COPY post_processing/post_processor.py /opt/gatling/bin
+COPY pre_processing/minio_reader.py /opt/gatling/bin
+COPY pre_processing/minio_poster.py /opt/gatling/bin
 COPY gatling-http-2.3.1.jar /opt/gatling/lib
 COPY gatling-core-2.3.1.jar /opt/gatling/lib
 COPY config.yaml /tmp/
