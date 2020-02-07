@@ -46,5 +46,5 @@ if __name__ == '__main__':
                 redis_client.set("reports_" + str(args['lg_id']) + ".zip", f.read())
 
     else:
-        post_processor = PostProcessor(args, aggregated_errors)
-        post_processor.post_processing()
+        post_processor = PostProcessor()
+        post_processor.post_processing(args, aggregated_errors)
