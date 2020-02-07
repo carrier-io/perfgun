@@ -24,7 +24,10 @@ docker run --rm -t -u 0:0 \
        -e test=<simulation_name> \
        -e "GATLING_TEST_PARAMS=-DapiUrl=<url> -Dduration=60 ..." \  #optional
        -e "test_type=<test_type>" \  #optional, default - 'demo'
+       -e "compile=true" # optional, default - false
        -e "env=<env>" \  #optional, default - 'demo'
+       -e "loki_host={{ http://loki }}" # loki host or IP
+       -e "loki_port=3100" # optional, default 3100
        -e "influxdb_host=<influx_host_DNS_or_IP>" \ 
        getcarrier/perfgun
 ```
@@ -41,9 +44,17 @@ docker run --rm -t -u 0:0 \
 
 `env` - optional tag, used to filter test results
 
+`loki_host` - loki host or IP, used to report failed requests to Loki
+
+`loki_port` - optional, default 3100
+
 `influxdb_host` - InfluxDB host DNS or IP. See InfluxDB configuration below
 
+`compile` - ( true | false ) flag to either compile sources before execution or not. Compilation increase the time of execution.
+
 If your test requires **additional parameters**, such as user count, duration, and so on, they can be passed to GATLING_TEST_PARAMS with the -D option.
+
+You can also add Java heap params, like `-Xms1g -Xmx1g` in the end of the `GATLING_TEST_PARAMS`
 
 To run [demo test](https://github.com/carrier-io/perfgun/blob/master/tests/user-files/simulations/carrier/flood_io.scala) you can use this command:
 
@@ -191,3 +202,47 @@ sh "cp -r ${WORKSPACE}/<path_to_user-files_folder> /opt/gatling"
 ```
 
 `<path_to_user-files_folder` - path in Jenkins workspace where stored Gatling simulation
+
+### getting tests from object storage
+
+In our opinion tests on gatling should have 2 different stages - compilation and execution
+
+#### Tests compilation
+
+Precondition for compilation step is bucket availability in object storage
+
+1. To create a bucket open a galloper url in the browser e.g. `http://{{ galloper_url }}`
+2. Click on  Artifacts in the side menu
+3. Click on the Bucket icon in right side of the page and choose `Create New Bucket`
+4. Name your bucket e.g. gatling
+
+Now you can compile your tests.
+
+In order to compile the tests and upload them to object storage please run the following command (with your values for `test`, `galloper_url`, `bucket` and `aftifact` as well as mount your folder with tests)
+
+Note: `artifact` should have .zip extension
+
+```
+docker run --rm -t -u 0:0 \
+           -v <your_local_path_to_tests>:/opt/gatling/user-files/ \ 
+           -e artifact="Flood.zip" \
+           -e galloper_url="http://{{ galloper_url }}" \
+           -e bucket="gatling" -e compile=true \
+        getcarrier/perfgun:latest
+```
+
+Once compilation completed you can find it in `http://{{ galloper_url }}/artifacts/{{ bucket }}` with the name `artifact`
+
+#### Execution
+
+Run the following command:
+
+```
+docker run --rm -t -u 0:0 \
+       -e test=carrier.Flood -e galloper_url="http://{{ galloper_url }}" \
+       -e bucket="gatling" -e artifact="Flood.zip" \
+       -e "GATLING_TEST_PARAMS=-DapiUrl=https://challengers.flood.io -Dduration=30 -Dramp_users=1 -Dramp_duration=1"  \
+       getcarrier/perfgun:latest
+```
+
+What it will do is copy saved artifact and execute simulation `carrier.Flood` with parameters from `GATLING_TEST_PARAMS`
