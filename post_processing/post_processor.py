@@ -37,9 +37,15 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     logParser = ErrorLogParser(args)
-    aggregated_errors = logParser.parse_errors()
+    try:
+        aggregated_errors = logParser.parse_errors()
+    except Exception as e:
+        aggregated_errors = {}
     prefix = environ.get('DISTRIBUTED_MODE_PREFIX')
+    save_reports = environ.get('save_reports')
+    token = environ.get('token')
     if prefix:
+        PROJECT_ID = environ.get('project_id')
         URL = environ.get('galloper_url')
         BUCKET = environ.get("results_bucket")
         if not all(a for a in [URL, BUCKET]):
@@ -58,11 +64,19 @@ if __name__ == '__main__':
         shutil.make_archive(path_to_test_results, 'zip', DATA_FOR_POST_PROCESSING_FOLDER)
 
         # Send data to minio
-        create_bucket = requests.post(f'{URL}/artifacts/bucket', allow_redirects=True, data={'bucket': BUCKET})
-        files = {'file': open(path_to_reports + ".zip", 'rb')}
-        requests.post(f'{URL}/artifacts/{BUCKET}/upload', allow_redirects=True, files=files)
+        headers = {'Authorization': f'bearer {token}'} if token else {}
+        if PROJECT_ID:
+            upload_url = f'{URL}/api/v1/artifacts/{PROJECT_ID}/{BUCKET}/file'
+            requests.post(f'{URL}/api/v1/artifacts/{PROJECT_ID}/{BUCKET}', allow_redirects=True, headers=headers)
+        else:
+            upload_url = f'{URL}/artifacts/{BUCKET}/upload'
+            requests.post(f'{URL}/artifacts/bucket', allow_redirects=True, data={'bucket': BUCKET}, headers=headers)
         files = {'file': open(path_to_test_results + ".zip", 'rb')}
-        requests.post(f'{URL}/artifacts/{BUCKET}/upload', allow_redirects=True, files=files)
+
+        requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
+        if save_reports:
+            files = {'file': open(path_to_reports + ".zip", 'rb')}
+            requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
 
     else:
         post_processor = PostProcessor()
