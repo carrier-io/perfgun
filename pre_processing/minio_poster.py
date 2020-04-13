@@ -9,6 +9,8 @@ BUCKET = environ.get("bucket")
 TEST = environ.get("artifact")
 PATH_TO_FILE = f'/tmp/{TEST}'
 TESTS_PATH = environ.get("tests_path", '/opt/gatling')
+PROJECT_ID = environ.get('project_id')
+TOKEN = environ.get("token")
 
 if (not all(a for a in [URL, BUCKET, TEST])):
     exit(0)
@@ -26,6 +28,11 @@ try:
     zipdir(ziph)
     ziph.close()
     files = {'file': open(PATH_TO_FILE,'rb')}
-    r = requests.post(f'{URL}/artifacts/{BUCKET}/upload', allow_redirects=True, files=files)
+    headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
+    if PROJECT_ID:
+        upload_url = f'{URL}/api/v1/artifacts/{PROJECT_ID}/{BUCKET}/file'
+    else:
+        upload_url = f'{URL}/artifacts/{BUCKET}/upload'
+    r = requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
 except Exception:
     print(format_exc())
