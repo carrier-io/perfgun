@@ -91,6 +91,7 @@ RUN sudo chmod +x /opt/gatling/bin/executor.sh
 COPY post_processing/post_processor.py /opt/gatling/bin
 COPY pre_processing/minio_reader.py /opt/gatling/bin
 COPY pre_processing/minio_poster.py /opt/gatling/bin
+COPY pre_processing/minio_args_poster.py /opt/gatling/bin
 COPY gatling-http-2.3.1.jar /opt/gatling/lib
 COPY gatling-core-2.3.1.jar /opt/gatling/lib
 COPY config.yaml /tmp/
@@ -101,5 +102,6 @@ COPY tests /opt/gatling
 COPY logback.xml /opt/gatling/conf
 RUN ["/bin/bash", "-c", "/opt/gatling/bin/gatling.sh -s carrier.WarmUp"]
 RUN rm -rf /opt/gatling/results/*
+RUN rm -rf /opt/gatling/logs/*
 
 ENTRYPOINT ["/opt/gatling/bin/executor.sh"]
