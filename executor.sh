@@ -98,9 +98,29 @@ sudo service telegraf restart
 sudo telegraf -config /etc/telegraf/telegraf_test_results.conf &
 fi
 
+if [[ -z "${influx_user}" ]]; then
+export _influx_user=""
+else
+export _influx_user="-iu ${influx_user}"
+fi
+
+if [[ -z "${influx_password}" ]]; then
+export _influx_password=""
+else
+export _influx_password="-ip ${influx_password}"
+fi
+
+if [[ "${influx_host}" != "None" ]]; then
+export _influx_host="-i ${influx_host}"
+else
+export _influx_host=""
+fi
+
+mkdir '/tmp/data_for_post_processing'
 export tests_path=/opt/gatling
 if [[ "${compile}" != true ]]; then
 python /opt/gatling/bin/minio_reader.py
+python /opt/gatling/bin/minio_args_poster.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password}
 fi
 
 DEFAULT_EXECUTION="/usr/bin/java"
@@ -129,25 +149,5 @@ python3 minio_poster.py
 else
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
 sleep 11s
-
-if [[ -z "${influx_user}" ]]; then
-export _influx_user=""
-else
-export _influx_user="-iu ${influx_user}"
-fi
-
-if [[ -z "${influx_password}" ]]; then
-export _influx_password=""
-else
-export _influx_password="-ip ${influx_password}"
-fi
-
-if [[ "${influx_host}" != "None" ]]; then
-export _influx_host="-i ${influx_host}"
-else
-export _influx_host=""
-fi
-
-mkdir '/tmp/data_for_post_processing'
 python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password}
 fi

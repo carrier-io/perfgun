@@ -9,7 +9,7 @@
     </appender>
 
     <appender name="ERRORS" class="ch.qos.logback.core.FileAppender">
-        <file>logs/errors/${simulation_name}.log</file>
+        <file>/tmp/${simulation_name}.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
             <onMatch>ACCEPT</onMatch>

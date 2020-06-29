@@ -3,11 +3,7 @@ import json
 import requests
 from os import environ
 import shutil
-from perfreporter.post_processor import PostProcessor
-from perfreporter.error_parser import ErrorLogParser
 
-
-RESULTS_FOLDER = '/opt/gatling/results/'
 
 DATA_FOR_POST_PROCESSING_FOLDER = "/tmp/data_for_post_processing/"
 
@@ -36,13 +32,7 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
-    logParser = ErrorLogParser(args)
-    try:
-        aggregated_errors = logParser.parse_errors()
-    except Exception as e:
-        aggregated_errors = {}
     prefix = environ.get('DISTRIBUTED_MODE_PREFIX')
-    save_reports = True if environ.get('save_reports') == "True" else False
     token = environ.get('token')
     if prefix:
         PROJECT_ID = environ.get('project_id')
@@ -51,15 +41,12 @@ if __name__ == '__main__':
         if not all(a for a in [URL, BUCKET]):
             exit(0)
 
-        # Make archive with gatling reports
-        path_to_reports = "/tmp/reports_" + prefix + "_" + str(args['lg_id'])
-        shutil.make_archive(path_to_reports, 'zip', RESULTS_FOLDER)
-
         # Make archive with data for post processing
         with open(DATA_FOR_POST_PROCESSING_FOLDER + "args.json", 'w') as f:
             f.write(json.dumps(args))
         with open(DATA_FOR_POST_PROCESSING_FOLDER + "aggregated_errors.json", 'w') as f:
-            f.write(json.dumps(aggregated_errors))
+            f.write(json.dumps({}))
+
         path_to_test_results = "/tmp/" + prefix + "_" + str(args['lg_id'])
         shutil.make_archive(path_to_test_results, 'zip', DATA_FOR_POST_PROCESSING_FOLDER)
 
@@ -74,10 +61,3 @@ if __name__ == '__main__':
         files = {'file': open(path_to_test_results + ".zip", 'rb')}
 
         requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
-        if save_reports:
-            files = {'file': open(path_to_reports + ".zip", 'rb')}
-            requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
-
-    else:
-        post_processor = PostProcessor()
-        post_processor.post_processing(args, aggregated_errors)
