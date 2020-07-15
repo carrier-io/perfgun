@@ -118,8 +118,8 @@ fi
 
 mkdir '/tmp/data_for_post_processing'
 export tests_path=/opt/gatling
-if [[ "${compile}" != true ]]; then
 python /opt/gatling/bin/minio_reader.py
+if [[ "${compile}" != true ]]; then
 python /opt/gatling/bin/minio_args_poster.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password}
 fi
 
