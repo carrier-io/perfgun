@@ -142,7 +142,16 @@ export COMPILER_OPTS="-Xss100M ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS}"
 export COMPILATION_CLASSPATH=`find "${GATLING_HOME}/lib" -maxdepth 1 -name "*.jar" -type f -exec printf :{} ';'`
 cd /opt/gatling/bin
 
+if [[ "${artifact}" == "tests_from_git_repo.zip" ]]; then
+export compile_and_run=true
+fi
 echo "Starting simulation: ${test}"
+if [[ "${compile_and_run}" == true ]]; then
+"$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
+"$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
+sleep 11s
+python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password}
+else
 if [[ "${compile}" == true ]]; then
 "$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
 python3 minio_poster.py
@@ -150,4 +159,5 @@ else
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
 sleep 11s
 python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password}
+fi
 fi
