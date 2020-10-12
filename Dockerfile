@@ -1,11 +1,4 @@
-FROM golang:1.13 as build
-
-RUN apt-get update && apt-get install -qy libsystemd-dev git
-
-WORKDIR /src
-RUN git clone https://github.com/grafana/loki.git
-WORKDIR /src/loki
-RUN make clean && make BUILD_IN_CONTAINER=false promtail
+FROM getcarrier/performance:base as build
 
 FROM ubuntu:16.04
 
@@ -41,7 +34,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
     python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' && \
     rm -rf /tmp/*
 
-RUN pip install git+https://github.com/carrier-io/perfreporter.git
+RUN pip install git+https://github.com/carrier-io/perfreporter.git@v.2.0
 
 # Creating carrier user and making him sudoer
 RUN groupadd -g $GID $UNAME
