@@ -142,9 +142,6 @@ export COMPILER_OPTS="-Xss100M ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS}"
 export COMPILATION_CLASSPATH=`find "${GATLING_HOME}/lib" -maxdepth 1 -name "*.jar" -type f -exec printf :{} ';'`
 cd /opt/gatling/bin
 
-if [[ "${artifact}" == "tests_from_git_repo.zip" ]]; then
-export compile_and_run=true
-fi
 echo "Starting simulation: ${test}"
 if [[ "${compile_and_run}" == true ]]; then
 "$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
