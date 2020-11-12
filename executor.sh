@@ -35,6 +35,7 @@ export influx_host="None"
 export influx_port=8086
 export gatling_db="gatling"
 export comparison_db="comparison"
+export telegraf_db="telegraf"
 export influx_user=""
 export influx_password=""
 fi
