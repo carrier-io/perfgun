@@ -86,6 +86,7 @@ COPY post_processing/post_processor.py /opt/gatling/bin
 COPY pre_processing/minio_reader.py /opt/gatling/bin
 COPY pre_processing/minio_poster.py /opt/gatling/bin
 COPY pre_processing/minio_args_poster.py /opt/gatling/bin
+COPY pre_processing/minio_additional_files_reader.py /opt/gatling/bin
 COPY gatling-http-3.1.3.jar /opt/gatling/lib
 COPY gatling-core-3.1.3.jar /opt/gatling/lib
 COPY config.yaml /tmp/
