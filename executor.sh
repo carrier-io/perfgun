@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#RUN INFLUXDB
+bash /entrypoint.sh influxd &
+
 if [[ $test == *"."* ]]; then
 export simulation_name=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').split('.')[1].lower())")
 export simulation_folder=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').split('.')[1].lower().replace('_', '-'))")
@@ -88,7 +91,7 @@ fi
 export lg_id="Lg_"$RANDOM"_"$RANDOM
 
 if [[ "${loki_host}" ]]; then
-/usr/bin/promtail --client.url=${loki_host}:${loki_port}/api/prom/push --client.external-labels=hostname=${lg_id} -config.file=/etc/promtail/docker-config.yaml &
+/usr/bin/promtail/promtail-linux-amd64 --client.url=${loki_host}:${loki_port}/api/prom/push --client.external-labels=hostname=${lg_id} -config.file=/etc/promtail/docker-config.yaml &
 fi
 
 if [[ "${influx_host}" != "None" ]]; then
@@ -103,6 +106,7 @@ sudo sed -i "s/INFLUX_USER/${influx_user}/g" /etc/telegraf/telegraf_test_results
 sudo sed -i "s/INFLUX_PASSWORD/${influx_password}/g" /etc/telegraf/telegraf_test_results.conf
 sudo service telegraf restart
 sudo telegraf -config /etc/telegraf/telegraf_test_results.conf &
+sudo telegraf -config /etc/telegraf/telegraf_local_results.conf &
 fi
 
 if [[ -z "${influx_user}" ]]; then
@@ -129,6 +133,7 @@ python /opt/gatling/bin/minio_reader.py
 python /opt/gatling/bin/minio_additional_files_reader.py
 if [[ "${compile}" != true ]]; then
 python /opt/gatling/bin/minio_args_poster.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -icdb ${comparison_db} -en ${env} ${_influx_user} ${_influx_password}
+python /opt/gatling/bin/downsampling.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password} &
 fi
 
 DEFAULT_EXECUTION="/usr/bin/java"
@@ -154,7 +159,7 @@ echo "Starting simulation: ${test}"
 if [[ "${compile_and_run}" == true ]]; then
 "$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler "$@" 2> /dev/null
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
-sleep 11s
+sleep 60s
 python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -icdb ${comparison_db} -en ${env} ${_influx_user} ${_influx_password}
 else
 if [[ "${compile}" == true ]]; then
@@ -162,7 +167,7 @@ if [[ "${compile}" == true ]]; then
 python3 minio_poster.py
 else
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
-sleep 11s
+sleep 60s
 python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -icdb ${comparison_db} -en ${env} ${_influx_user} ${_influx_password}
 fi
 fi
