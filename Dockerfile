@@ -1,15 +1,4 @@
-FROM getcarrier/performance:base as build
-
-FROM ubuntu:16.04
-
-#Install Open JDK 8
-
-RUN apt-get update \
-    && apt-get -y install openjdk-8-jdk software-properties-common \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
-ENV PATH $JAVA_HOME/bin:$PATH
+FROM getcarrier/performance:base
 
 WORKDIR /opt
 ENV GATLING_VERSION 2.3.1
@@ -23,7 +12,7 @@ RUN mkdir -p gatling
 
 # Install utilities
 RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
-    apt-get install -y --no-install-recommends bash sudo curl unzip git wget python3.6 python3.6-dev && \
+    apt-get install -y --no-install-recommends bash git python3.6 python3.6-dev && \
     wget https://bootstrap.pypa.io/get-pip.py && python3.6 get-pip.py && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python && \
@@ -33,7 +22,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
     python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' && \
     rm -rf /tmp/*
 
-RUN pip install git+https://github.com/carrier-io/perfreporter.git@v.2.0
+RUN pip install git+https://github.com/hunkom/perfreporter.git
 
 # Creating carrier user and making him sudoer
 RUN groupadd -g $GID $UNAME
@@ -51,6 +40,7 @@ RUN cd /tmp && wget https://dl.influxdata.com/telegraf/releases/telegraf_1.10.4-
 
 COPY telegraf.conf /etc/telegraf/telegraf.conf
 COPY telegraf_test_results.conf /etc/telegraf/telegraf_test_results.conf
+COPY telegraf_local_results.conf /etc/telegraf/telegraf_local_results.conf
 COPY jolokia.conf /opt
 
 ENV PATH /opt/gatling/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
@@ -63,8 +53,6 @@ RUN apt-get update && \
   apt-get install -qy \
   tzdata ca-certificates libsystemd-dev && \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-COPY --from=build /src/loki/cmd/promtail/promtail /usr/bin/promtail
-COPY promtail-docker-config.yaml /etc/promtail/docker-config.yaml
 
 # Installting Gatling
 
@@ -82,6 +70,7 @@ RUN wget -q -O /tmp/gatling-$GATLING_VERSION.zip https://repo1.maven.org/maven2/
 COPY executor.sh /opt/gatling/bin
 RUN sudo chmod +x /opt/gatling/bin/executor.sh
 COPY post_processing/post_processor.py /opt/gatling/bin
+COPY post_processing/downsampling.py /opt/gatling/bin
 COPY pre_processing/minio_reader.py /opt/gatling/bin
 COPY pre_processing/minio_poster.py /opt/gatling/bin
 COPY pre_processing/minio_args_poster.py /opt/gatling/bin
