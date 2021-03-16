@@ -1,4 +1,4 @@
-FROM getcarrier/performance:base
+FROM getcarrier/performance:base-2.5
 
 WORKDIR /opt
 ENV GATLING_VERSION 2.3.1
@@ -22,7 +22,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
     python -m pip install 'common==0.1.2' 'configobj==5.0.6' 'redis==3.2.0' 'argparse==1.4.0' && \
     rm -rf /tmp/*
 
-RUN pip install git+https://github.com/hunkom/perfreporter.git
+RUN pip install git+https://github.com/carrier-io/perfreporter.git
 
 # Creating carrier user and making him sudoer
 RUN groupadd -g $GID $UNAME
