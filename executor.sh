@@ -136,9 +136,13 @@ python /opt/gatling/bin/minio_args_poster.py -t $test_type -s $simulation_name -
 python /opt/gatling/bin/downsampling.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password} &
 fi
 
+if [[ -z "${JVM_ARGS}" ]]; then
+  export JVM_ARGS="-Xms1g -Xmx1g"
+fi
+echo "Using ${JVM_ARGS} as JVM Args"
 DEFAULT_EXECUTION="/usr/bin/java"
 JOLOKIA_AGENT="-javaagent:/opt/java/jolokia-jvm-1.6.0-agent.jar=config=/opt/jolokia.conf"
-DEFAULT_JAVA_OPTS=" -server -Xms1g -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30"
+DEFAULT_JAVA_OPTS=" -server ${JVM_ARGS} -XX:+UseG1GC -XX:MaxGCPauseMillis=30"
 DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:G1HeapRegionSize=16m -XX:InitiatingHeapOccupancyPercent=75"
 DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+AggressiveOpts"
 DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:+OptimizeStringConcat -XX:+HeapDumpOnOutOfMemoryError"
