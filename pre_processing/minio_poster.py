@@ -30,7 +30,7 @@ try:
     files = {'file': open(PATH_TO_FILE,'rb')}
     headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
     if PROJECT_ID:
-        upload_url = f'{URL}/api/v1/artifacts/{PROJECT_ID}/{BUCKET}/file'
+        upload_url = f'{URL}/api/v1/artifact/{PROJECT_ID}/{BUCKET}'
     else:
         upload_url = f'{URL}/artifacts/{BUCKET}/upload'
     r = requests.post(upload_url, allow_redirects=True, files=files, headers=headers)

@@ -16,7 +16,7 @@ if (not all(a for a in [URL, BUCKET, TEST])):
 
 try:
     if PROJECT_ID:
-        endpoint = f'/api/v1/artifacts/{PROJECT_ID}/{BUCKET}/{TEST}'
+        endpoint = f'/api/v1/artifact/{PROJECT_ID}/{BUCKET}/{TEST}'
     else:
         endpoint = f'/artifacts/{BUCKET}/{TEST}'
     headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
