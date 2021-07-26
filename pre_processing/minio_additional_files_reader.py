@@ -14,7 +14,7 @@ if not all(a for a in [URL, ADDITIONAL_FILES]):
 try:
     files = json.loads(ADDITIONAL_FILES)
     if PROJECT_ID:
-        endpoint = f'/api/v1/artifacts/{PROJECT_ID}'
+        endpoint = f'/api/v1/artifact/{PROJECT_ID}'
     else:
         endpoint = '/artifacts'
     headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
