@@ -5,6 +5,7 @@ from os import environ
 import shutil
 from perfreporter.post_processor import PostProcessor
 from perfreporter.error_parser import ErrorLogParser
+from os import environ
 
 
 RESULTS_FOLDER = '/opt/gatling/results/'
@@ -34,7 +35,22 @@ def get_args():
     return vars(parser.parse_args())
 
 
+def update_test_status():
+    headers = {'content-type': 'application/json', 'Authorization': f'bearer {environ.get("token")}'}
+    url = f'{environ.get("galloper_url")}/api/v1/reports/{environ.get("project_id")}/{environ.get("report_id")}/status'
+    response = requests.get(url, headers=headers).json()
+    if response["message"] == "In progress":
+        data = {"test_status": {"status": "Post processing", "percentage": 90,
+                                "description": "Test finished. Results post processing started"}}
+        response = requests.put(url, json=data, headers=headers)
+        try:
+            print(response.json()["message"])
+        except:
+            print(response.text)
+
+
 if __name__ == '__main__':
+    update_test_status()
     args = get_args()
     logParser = ErrorLogParser(args)
     try:
