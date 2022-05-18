@@ -29,10 +29,7 @@ try:
     ziph.close()
     files = {'file': open(PATH_TO_FILE,'rb')}
     headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
-    if PROJECT_ID:
-        upload_url = f'{URL}/api/v1/artifact/{PROJECT_ID}/{BUCKET}'
-    else:
-        upload_url = f'{URL}/artifacts/{BUCKET}/upload'
+    upload_url = f'{URL}/api/v1/artifacts/artifacts/{PROJECT_ID}/{BUCKET}'
     r = requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
 except Exception:
     print(format_exc())

@@ -81,12 +81,8 @@ if __name__ == '__main__':
 
         # Send data to minio
         headers = {'Authorization': f'bearer {token}'} if token else {}
-        if PROJECT_ID:
-            upload_url = f'{URL}/api/v1/artifact/{PROJECT_ID}/{BUCKET}'
-            requests.post(f'{URL}/api/v1/artifact/{PROJECT_ID}/{BUCKET}', allow_redirects=True, headers=headers)
-        else:
-            upload_url = f'{URL}/artifacts/{BUCKET}/upload'
-            requests.post(f'{URL}/artifacts/bucket', allow_redirects=True, data={'bucket': BUCKET}, headers=headers)
+        upload_url = f'{URL}/api/v1/artifacts/artifacts/{PROJECT_ID}/{BUCKET}'
+        requests.post(f'{URL}/api/v1/artifacts/buckets/{PROJECT_ID}', data={"name": BUCKET}, allow_redirects=True, headers=headers)
         files = {'file': open(path_to_test_results + ".zip", 'rb')}
 
         requests.post(upload_url, allow_redirects=True, files=files, headers=headers)

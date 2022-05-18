@@ -21,7 +21,7 @@ def get_args():
 
 def update_test_status():
     headers = {'content-type': 'application/json', 'Authorization': f'bearer {environ.get("token")}'}
-    url = f'{environ.get("galloper_url")}/api/v1/reports/{environ.get("project_id")}/{environ.get("report_id")}/status'
+    url = f'{environ.get("galloper_url")}/api/v1/backend_performance/report_status/{environ.get("project_id")}/{environ.get("report_id")}'
     response = requests.get(url, headers=headers).json()
     if response["message"] == "Preparing...":
         data = {"test_status": {"status": "In progress", "percentage": 10,
