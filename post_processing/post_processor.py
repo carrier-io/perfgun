@@ -33,8 +33,21 @@ def get_args():
                         default='/opt/gatling/bin/logs/test_results.log')
     return vars(parser.parse_args())
 
+def update_test_status():
+    headers = {'content-type': 'application/json', 'Authorization': f'bearer {environ.get("token")}'}
+    url = f'{environ.get("galloper_url")}/api/v1/backend_performance/report_status/{environ.get("project_id")}/{environ.get("report_id")}'
+    response = requests.get(url, headers=headers).json()
+    if response["message"] == "In progress":
+        data = {"test_status": {"status": "Post processing", "percentage": 90,
+                                "description": "Test finished. Results post processing started"}}
+        response = requests.put(url, json=data, headers=headers)
+        try:
+            print(response.json()["message"])
+        except:
+            print(response.text)
 
 if __name__ == '__main__':
+    update_test_status()
     args = get_args()
     logParser = ErrorLogParser(args)
     try:
@@ -66,12 +79,8 @@ if __name__ == '__main__':
 
         # Send data to minio
         headers = {'Authorization': f'bearer {token}'} if token else {}
-        if PROJECT_ID:
-            upload_url = f'{URL}/api/v1/artifact/{PROJECT_ID}/{BUCKET}'
-            requests.post(f'{URL}/api/v1/artifact/{PROJECT_ID}/{BUCKET}', allow_redirects=True, headers=headers)
-        else:
-            upload_url = f'{URL}/artifacts/{BUCKET}/upload'
-            requests.post(f'{URL}/artifacts/bucket', allow_redirects=True, data={'bucket': BUCKET}, headers=headers)
+        upload_url = f'{URL}/api/v1/artifacts/artifacts/{PROJECT_ID}/{BUCKET}'
+        requests.post(f'{URL}/api/v1/artifacts/buckets/{PROJECT_ID}', data={"name": BUCKET}, allow_redirects=True, headers=headers)
         files = {'file': open(path_to_test_results + ".zip", 'rb')}
 
         requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
