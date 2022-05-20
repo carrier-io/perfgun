@@ -11,11 +11,11 @@ ARG GID=1001
 RUN mkdir -p gatling
 
 # Install utilities
-RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
-    apt-get install -y --no-install-recommends bash git python3.6 python3.6-dev && \
-    wget https://bootstrap.pypa.io/get-pip.py && python3.6 get-pip.py && \
-    ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
-    ln -s /usr/bin/python3.6 /usr/local/bin/python && \
+RUN add-apt-repository -y ppa:jblgf0/python && apt-get update && \
+    apt-get install -y --no-install-recommends bash git python3.7 python3.7-dev && \
+    wget https://bootstrap.pypa.io/get-pip.py && python3.7 get-pip.py && \
+    ln -s /usr/bin/python3.7 /usr/local/bin/python3 && \
+    ln -s /usr/bin/python3.7 /usr/local/bin/python && \
     python -m pip install --upgrade pip && \
     apt-get clean && \
     python -m pip install setuptools==40.6.2 && \
