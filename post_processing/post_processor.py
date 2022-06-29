@@ -46,9 +46,12 @@ def update_test_status():
         except:
             print(response.text)
 
+
 if __name__ == '__main__':
     update_test_status()
     args = get_args()
+    if environ.get("report_id"):
+        args["report_id"] = environ.get("report_id")
     logParser = ErrorLogParser(args)
     try:
         aggregated_errors = logParser.parse_errors()
