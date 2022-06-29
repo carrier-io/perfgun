@@ -1,4 +1,4 @@
-FROM getcarrier/performance:base-2.5
+FROM getcarrier/performance:base-latest
 
 
 WORKDIR /opt
@@ -13,8 +13,8 @@ ARG GID=1001
 RUN mkdir -p gatling
 
 # Install utilities
-RUN add-apt-repository -y ppa:jblgf0/python && apt-get update && \
-    apt-get install -y --no-install-recommends bash git python3.7 python3.7-dev && \
+RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
+    apt-get install -y --no-install-recommends bash git gfortran python3.7 python3.7-dev python3.7-distutils python3-apt && \
     wget https://bootstrap.pypa.io/get-pip.py && python3.7 get-pip.py && \
     ln -s /usr/bin/python3.7 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.7 /usr/local/bin/python && \
@@ -25,6 +25,7 @@ RUN add-apt-repository -y ppa:jblgf0/python && apt-get update && \
     rm -rf /tmp/*
 
 RUN pip install git+https://github.com/carrier-io/perfreporter.git
+RUN pip install git+https://github.com/carrier-io/loki_logger.git
 
 # Creating carrier user and making him sudoer
 RUN groupadd -g $GID $UNAME
@@ -52,7 +53,7 @@ RUN chown -R ${UNAME}:${UNAME} /opt/gatling/
 
 
 RUN apt-get update && \
-  apt-get install -qy \
+  DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -qy \
   tzdata ca-certificates libsystemd-dev && \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
