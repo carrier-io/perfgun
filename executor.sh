@@ -132,7 +132,7 @@ export tests_path=/opt/gatling
 python /opt/gatling/bin/minio_reader.py
 python /opt/gatling/bin/minio_additional_files_reader.py
 if [[ "${compile}" != true ]]; then
-python /opt/gatling/bin/minio_args_poster.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -icdb ${comparison_db} -en ${env} ${_influx_user} ${_influx_password}
+#python /opt/gatling/bin/minio_args_poster.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -icdb ${comparison_db} -en ${env} ${_influx_user} ${_influx_password}
 python /opt/gatling/bin/downsampling.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -en ${env} ${_influx_user} ${_influx_password} &
 fi
 
