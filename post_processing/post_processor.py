@@ -73,21 +73,21 @@ if __name__ == '__main__':
         shutil.make_archive(path_to_reports, 'zip', RESULTS_FOLDER)
 
         # Make archive with data for post processing
-        with open(DATA_FOR_POST_PROCESSING_FOLDER + "args.json", 'w') as f:
-            f.write(json.dumps(args))
-        with open(DATA_FOR_POST_PROCESSING_FOLDER + "aggregated_errors.json", 'w') as f:
-            f.write(json.dumps(aggregated_errors))
-        path_to_test_results = "/tmp/" + prefix + "_" + str(args['lg_id'])
-        shutil.make_archive(path_to_test_results, 'zip', DATA_FOR_POST_PROCESSING_FOLDER)
+        # with open(DATA_FOR_POST_PROCESSING_FOLDER + "args.json", 'w') as f:
+        #     f.write(json.dumps(args))
+        # with open(DATA_FOR_POST_PROCESSING_FOLDER + "aggregated_errors.json", 'w') as f:
+        #     f.write(json.dumps(aggregated_errors))
+        # path_to_test_results = "/tmp/" + prefix + "_" + str(args['lg_id'])
+        # shutil.make_archive(path_to_test_results, 'zip', DATA_FOR_POST_PROCESSING_FOLDER)
 
         # Send data to minio
         headers = {'Authorization': f'bearer {token}'} if token else {}
         upload_url = f'{URL}/api/v1/artifacts/artifacts/{PROJECT_ID}/{BUCKET}'
-        requests.post(f'{URL}/api/v1/artifacts/buckets/{PROJECT_ID}', data={"name": BUCKET}, allow_redirects=True,
-                      headers={**headers, 'Content-type': 'application/json'})
-        files = {'file': open(path_to_test_results + ".zip", 'rb')}
-
-        requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
+        # requests.post(f'{URL}/api/v1/artifacts/buckets/{PROJECT_ID}', data={"name": BUCKET}, allow_redirects=True,
+        #               headers={**headers, 'Content-type': 'application/json'})
+        # files = {'file': open(path_to_test_results + ".zip", 'rb')}
+        #
+        # requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
         if save_reports:
             files = {'file': open(path_to_reports + ".zip", 'rb')}
             requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
