@@ -95,6 +95,7 @@ if [[ "${loki_host}" ]]; then
 fi
 
 if [[ "${influx_host}" != "None" ]]; then
+sudo sed -i "s/BUILD_ID/${build_id}/g" /etc/telegraf/telegraf.conf
 sudo sed -i "s/LOAD_GENERATOR_NAME/${lg_name}_${simulation_name}_${lg_id}/g" /etc/telegraf/telegraf.conf
 sudo sed -i "s/INFLUX_HOST/http:\/\/${influx_host}:${influx_port}/g" /etc/telegraf/telegraf.conf
 sudo sed -i "s/telegraf/${telegraf_db}/g" /etc/telegraf/telegraf.conf
@@ -127,8 +128,8 @@ else
 export _influx_host=""
 fi
 
-mkdir '/tmp/data_for_post_processing'
 export tests_path=/opt/gatling
+mkdir '/tmp/data_for_post_processing'
 python /opt/gatling/bin/minio_reader.py
 python /opt/gatling/bin/minio_additional_files_reader.py
 if [[ "${compile}" != true ]]; then
@@ -150,24 +151,24 @@ DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -Djava.net.preferIPv4Stack=true -Djava.n
 export GATLING_HOME="/opt/gatling"
 export GATLING_CONF="${GATLING_HOME}/conf"
 export GATLING_CLASSPATH="${GATLING_HOME}/lib/*:${GATLING_HOME}/user-files:${GATLING_CONF}:"
-export COMPILER_CLASSPATH="$GATLING_HOME/lib/*:$GATLING_CONF:"
+export COMPILER_CLASSPATH="${GATLING_HOME}/lib/zinc/*:${GATLING_CLASSPATH}:"
 
 export JAVA_OPTS="-Dsimulation_name=${simulation_name} -Denv=${env} -Dtest_type=${test_type} -Dbuild_id=${build_id} -Dlg_id=${lg_id} -Dgatling.http.ahc.pooledConnectionIdleTimeout=150000 -Dgatling.http.ahc.readTimeout=150000 -Dgatling.http.ahc.requestTimeout=150000 -Dgatling.data.writers.0=console -Dgatling.data.writers.1=file -Dcharting.indicators.lowerBound=2000 -Dcharting.indicators.higherBound=3000 ${GATLING_TEST_PARAMS}"
 
 echo $JAVA_OPTS
 export COMPILER_OPTS="-Xss100M ${DEFAULT_JAVA_OPTS} ${JAVA_OPTS}"
-#export COMPILATION_CLASSPATH=`find "${GATLING_HOME}/lib" -maxdepth 1 -name "*.jar" -type f -exec printf :{} ';'`
+export COMPILATION_CLASSPATH=`find "${GATLING_HOME}/lib" -maxdepth 1 -name "*.jar" -type f -exec printf :{} ';'`
 cd /opt/gatling/bin
 
 echo "Starting simulation: ${test}"
 if [[ "${compile_and_run}" == true ]]; then
-"$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler "$@" 2> /dev/null
+"$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
 sleep 60s
 python post_processor.py -t $test_type -s $simulation_name -b ${build_id} -l ${lg_id} ${_influx_host} -p ${influx_port} -idb ${gatling_db} -icdb ${comparison_db} -en ${env} ${_influx_user} ${_influx_password}
 else
 if [[ "${compile}" == true ]]; then
-"$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler "$@" 2> /dev/null
+"$DEFAULT_EXECUTION" $COMPILER_OPTS -cp "$COMPILER_CLASSPATH" io.gatling.compiler.ZincCompiler -ccp "$COMPILATION_CLASSPATH"  2> /dev/null
 python3 minio_poster.py
 else
 "$DEFAULT_EXECUTION" $JOLOKIA_AGENT $DEFAULT_JAVA_OPTS $JAVA_OPTS -cp "$GATLING_CLASSPATH" io.gatling.app.Gatling -s $test
