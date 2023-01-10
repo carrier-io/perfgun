@@ -3,37 +3,7 @@
 #RUN INFLUXDB
 bash /entrypoint.sh influxd &
 
-if [[ $test == *"."* ]]; then
-export simulation_name=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').split('.')[1].lower())")
-export simulation_folder=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').split('.')[1].lower().replace('_', '-'))")
-else
-export simulation_name=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').lower())")
-export simulation_folder=$(python -c "from os import environ; print(environ.get('test', 'carrier.WarmUp').lower().replace('_', '-'))")
-fi
-
-if [[ -z "${config_yaml}" ]]; then
-export config=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()); print(y)")
-else
-$(python -c "import json; import os; f = open('/tmp/config.yaml', 'w'); f.write(json.loads(os.environ['config_yaml']))")
-export config=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()); print(y)")
-fi
-
-
-if [[ "${config}" != "None" ]]; then
-export influx_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('host'))")
-export influx_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('port',8086))")
-export influx_user=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('user',''))")
-export influx_password=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('password',''))")
-export gatling_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('influx_db', 'gatling'))")
-export comparison_db=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('influx',{}); print(y.get('comparison_db', 'comparison'))")
-if [[ -z "${loki_host}" ]]; then
-export loki_host=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('host',''))")
-fi
-if [[ -z "${loki_port}" ]]; then
-export loki_port=$(python -c "import yaml; y = yaml.load(open('/tmp/config.yaml').read()).get('loki',{}); print(y.get('port', '3100'))")
-fi
-
-else
+export simulation_name=$test_name
 export influx_host="None"
 export influx_port=8086
 export gatling_db="gatling"
@@ -41,7 +11,6 @@ export comparison_db="comparison"
 export telegraf_db="telegraf"
 export influx_user=""
 export influx_password=""
-fi
 
 if [[ -z "${influxdb_host}" ]]; then
 true
