@@ -1,6 +1,7 @@
 from os import environ
 import requests
 import zipfile
+import json
 from traceback import format_exc
 from centry_loki import log_loki
 
@@ -11,6 +12,9 @@ PATH_TO_FILE = f'/tmp/{TEST}'
 TESTS_PATH = environ.get("tests_path", '/opt/gatling')
 PROJECT_ID = environ.get('project_id')
 TOKEN = environ.get("token")
+
+integrations = json.loads(environ.get("integrations", '{}'))
+s3_config = integrations.get('system', {}).get('s3_integration', {})
 
 if (not all(a for a in [URL, BUCKET, TEST])):
     exit(0)
@@ -25,7 +29,7 @@ try:
     logger.info(f"Download artifacts. Bucket {BUCKET}, file {TEST}")
     endpoint = f'/api/v1/artifacts/artifact/{PROJECT_ID}/{BUCKET}/{TEST}'
     headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
-    r = requests.get(f'{URL}/{endpoint}', allow_redirects=True, headers=headers)
+    r = requests.get(f'{URL}/{endpoint}', params=s3_config, allow_redirects=True, headers=headers)
     with open(PATH_TO_FILE, 'wb') as file_data:
         file_data.write(r.content)
     with zipfile.ZipFile(PATH_TO_FILE, 'r') as zip_ref:

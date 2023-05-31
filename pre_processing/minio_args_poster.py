@@ -36,6 +36,8 @@ if __name__ == '__main__':
         args["report_id"] = environ.get("report_id")
     prefix = environ.get('DISTRIBUTED_MODE_PREFIX')
     token = environ.get('token')
+    integrations = json.loads(environ.get("integrations", '{}'))
+    s3_config = integrations.get('system', {}).get('s3_integration', {})
     if prefix:
         PROJECT_ID = environ.get('project_id')
         URL = environ.get('galloper_url')
@@ -55,8 +57,9 @@ if __name__ == '__main__':
         # Send data to minio
         headers = {'Authorization': f'bearer {token}'} if token else {}
         upload_url = f'{URL}/api/v1/artifacts/artifacts/{PROJECT_ID}/{BUCKET}'
-        requests.post(f'{URL}/api/v1/artifacts/buckets/{PROJECT_ID}', data={"name": BUCKET}, allow_redirects=True,
+        requests.post(f'{URL}/api/v1/artifacts/buckets/{PROJECT_ID}', params=s3_config,
+                      data={"name": BUCKET}, allow_redirects=True,
                       headers={**headers, 'Content-type': 'application/json'})
         files = {'file': open(path_to_test_results + ".zip", 'rb')}
 
-        requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
+        requests.post(upload_url, params=s3_config, allow_redirects=True, files=files, headers=headers)

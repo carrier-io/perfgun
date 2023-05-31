@@ -1,5 +1,6 @@
 from os import environ, walk, path
 import requests
+import json
 from urllib.parse import urlparse
 import zipfile
 from traceback import format_exc
@@ -11,6 +12,9 @@ PATH_TO_FILE = f'/tmp/{TEST}'
 TESTS_PATH = environ.get("tests_path", '/opt/gatling')
 PROJECT_ID = environ.get('project_id')
 TOKEN = environ.get("token")
+
+integrations = json.loads(environ.get("integrations", '{}'))
+s3_config = integrations.get('system', {}).get('s3_integration', {})
 
 if (not all(a for a in [URL, BUCKET, TEST])):
     exit(0)
@@ -30,6 +34,6 @@ try:
     files = {'file': open(PATH_TO_FILE,'rb')}
     headers = {'Authorization': f'bearer {TOKEN}'} if TOKEN else {}
     upload_url = f'{URL}/api/v1/artifacts/artifacts/{PROJECT_ID}/{BUCKET}'
-    r = requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
+    r = requests.post(upload_url, params=s3_config, allow_redirects=True, files=files, headers=headers)
 except Exception:
     print(format_exc())
