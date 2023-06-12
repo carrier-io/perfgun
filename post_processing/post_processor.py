@@ -52,6 +52,8 @@ def update_test_status():
 if __name__ == '__main__':
     update_test_status()
     args = get_args()
+    integrations = json.loads(environ.get("integrations", '{}'))
+    s3_config = integrations.get('system', {}).get('s3_integration', {})
     if environ.get("report_id"):
         args["report_id"] = environ.get("report_id")
     logParser = ErrorLogParser(args)
@@ -91,7 +93,7 @@ if __name__ == '__main__':
         # requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
         if save_reports:
             files = {'file': open(path_to_reports + ".zip", 'rb')}
-            requests.post(upload_url, allow_redirects=True, files=files, headers=headers)
+            requests.post(upload_url, params=s3_config, allow_redirects=True, files=files, headers=headers)
 
     else:
         post_processor = PostProcessor()
