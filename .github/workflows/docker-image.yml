@@ -5,7 +5,7 @@ on:
     tags: 
       - '*'
   push:
-    branches: [ master ]
+    branches: [ beta-2.0 ]
 
 jobs:
 
@@ -22,12 +22,12 @@ jobs:
     -
        name: Build
        run: |
-          docker build -t getcarrier/perfgun:latest-3.7 -f docker/Dockerfile_3_7 .
-          docker build -t getcarrier/perfgun:latest-3.6 -f docker/Dockerfile_3_6 .
-          docker build -t getcarrier/perfgun:latest-3.1 -f docker/Dockerfile_3_1 .
+          docker build -t getcarrier/perfgun:beta-2.0-3.7 -f docker/Dockerfile_3_7 .
+          docker build -t getcarrier/perfgun:beta-2.0-3.6 -f docker/Dockerfile_3_6 .
+          docker build -t getcarrier/perfgun:beta-2.0-3.1 -f docker/Dockerfile_3_1 .
     -
        name: Push
        run: |
-         docker push getcarrier/perfgun:latest-3.7
-         docker push getcarrier/perfgun:latest-3.6
-         docker push getcarrier/perfgun:latest-3.1
+         docker push getcarrier/perfgun:beta-2.0-3.7
+         docker push getcarrier/perfgun:beta-2.0-3.6
+         docker push getcarrier/perfgun:beta-2.0-3.1
